@@ -9,7 +9,7 @@ navbar:
       href: descriptives.html
     - text: "Models"
       href: models.html
-    - text: "Inventories data"
+    - text: "Inventory data"
       href: inventories.html
 output:
   html_document:
