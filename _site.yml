@@ -3,7 +3,15 @@ output_dir: "docs"
 navbar:
   title: "My Website"
   left:
-    - text: "Home"
+    - text: "Carbon project"
       href: index.html
-    - text: "About"
-      href: about.html
+    - text: "Descriptive analysis of field data"
+      href: descriptives.html
+    - text: "Models"
+      href: models.html
+    - text: "Inventories data"
+      href: inventories.html
+output:
+  html_document:
+    theme: cosmo
+    highlight: textmate
