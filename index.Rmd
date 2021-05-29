@@ -7,6 +7,33 @@ output:
           toc_float: true
 ---
 
-# First tab
+## Introduction
+<style>
+body {
+text-align: justify}
+</style>
 
-here is some text for tab 1
+Welcome, the purpose of this website is to keep you updated!
+
+I have forest inventory data and lidar from Paisagem Sustentaveis and Marcus Vinicio Neves d'Oliveira. Other datasets are yet to come.
+
+The following map shows the locations of the plots I am using for the analysis:
+```{=html}
+<iframe src="https://www.google.com/maps/d/u/0/embed?mid=1B8fDAx8gQiWn6hD3BzQkBcjWoqBajU1E" width="640" height="480"></iframe>
+```
+
+
+
+
+whose model parameters a and b vary with forest types. Basal Area (BA) and wood density (ρ) will be coupled as sub-models to develop a generalised model that can be applicable across different forest types:
+
+$$
+ACD_{plot} = a · TCH^d · BA^c · ρ^b; 
+$$
+ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin & Thomas, 2011). 
+
+LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.
+
+
+## Map with field plots used
+
