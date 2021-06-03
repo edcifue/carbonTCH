@@ -7,7 +7,6 @@ output:
           toc_float: true
 ---
 
-## Introduction
 <style>
 body {
 text-align: justify}
@@ -15,15 +14,167 @@ text-align: justify}
 
 Welcome, the purpose of this website is to keep you updated!
 
-I have forest inventory data and lidar from Paisagem Sustentaveis and Marcus Vinicio Neves d'Oliveira. Other datasets are yet to come.
+While other datasets are yet to come, I am working with forest inventory data plus matching lidar from **Paisagens Sustentáveis** and **Marcus Vinicio Neves d'Oliveira** in Brazil. 
 
-The following map shows the locations of the plots I am using for the analysis:
+
+## Cleaning data
+Inventory datasets were compiled and standardised. Taxonomic errors were corrected using the Taxonomic Name Resolution Service v5.0 (https://tnrs.biendata.org/). 
+
+All inventories matching with lidar (`````r nrow(cars)`````plots/tansects in `````r nrow(cars)````` locations) were selected, but some data were excluded sequentially:
+
+- ```r nrow(cars)``` inventory transects (*i.e.*, 500 meter transects in Paisagen Sustentáveis).
+
+- ```r nrow(cars)``` re-sampled inventory plots. I selected most recent plots (not always) with the least time difference from its lidar survey.
+
+- ```r nrow(cars)``` plots which had more than half of the trees dead and less than 10 individuals.
+
+- ```r nrow(cars)``` dead individuals were removed.  *(I may add them later into biomass estimations, ```r nrow(cars)``` out of ```r nrow(cars)``` (```r nrow(cars)```%) dead trees have DBH measurements)*.
+
+- ```r nrow(cars)``` lianas.
+
+- ```r nrow(cars)``` trees without DBH measurement.
+
+
+Finally, what's left for the analysis are ```r nrow(cars)``` individuals in ```r nrow(cars)``` plots in ```r nrow(cars)``` locations:
+
+```{r}
+#Add a table or something... with plot size...
+summary(cars$dist)
+summary(cars$speed)
+```
+
+## Map of inventory and lidar boundaries
+The following map shows plot locations and lidar transects available for the analysis:
 ```{=html}
 <iframe src="https://www.google.com/maps/d/u/0/embed?mid=1B8fDAx8gQiWn6hD3BzQkBcjWoqBajU1E" width="640" height="480"></iframe>
 ```
 
 
 
+# AGB estimations
+
+In order to calculate Above-ground biomass (AGB) from field inventories, allomtric ecuations are used. In this case, Chave et al. (201X) equation 4 was used:
+$$
+AGB = DBH^2...
+$$
+Further cleaning of data...
+
+
+## DBH (Diameter at Breast Height)
+
+Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees >35cm DBH in the whole plot area and >10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m subplot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.
+
+Add image? Yes...
+
+```{r}
+#Add table of min DBH in plots (excel)
+summary(cars$dist)
+summary(cars$speed)
+```
+
+
+Minimum DBH threshold is consisteng in Paisagens Sustentáveis where few DBHs are below 10 cm, therefore I considered them typing errors. I thought of giving them the mean DBH value for the species but I ended up excluding them for the moment.
+
+Data in MarVin is not fully consistent and minimum DBH threshold seem to go from 5cm, but not all plots. *I need to get proper metadata from him.* Also, there are few points below 5cm which I consider they are typos.
+
+```{r}
+#Add a table with DBH cut() and owner
+summary(cars$dist)
+summary(cars$speed)
+```
+
+Now, to make projects comparable for the moment, all trees DBH < 10cm were excluded (```r nrow(cars)``` ind), but this will probably change to a minimum of 5cm DBH in the future, using expansion factors for AGB in plots with no individuals below 10cm. This because it will be a problem *e.g.* when comparing our data with Asner & Mascaro (201X)'s which go from 5cm.
+
+This is the distribution of DBH in our data (*i.e.*, DBH<10cm):
+```{r}
+#Add histogramof DBH
+summary(cars$dist)
+summary(cars$speed)
+```
+
+
+## Height
+
+Height values are few among inventories. Only PaiSus had some height values, whereas MarVin data had none.
+
+```{r}
+# add number of height values in data, etc
+summary(cars$dist)
+summary(cars$speed)
+```
+
+Therefore, I estimated height of the trees from DBH measurements by constructing local height models.
+
+
+### Local Height Models
+
+The relationship between DBH and height are different for trees and palms, so I each group had its own local height model. There were ~30 crazy outliers which I did not account for when building the models. *e.g.*, $height = 48.2m$ when $DBH = 12.7 cm$.
+
+```{r}
+#Add plot H ~ DBH for trees & palms. show outliers?
+summary(cars$dist)
+summary(cars$speed)
+```
+
+
+#### Trees
+
+
+
+
+
+#### Palms
+
+
+
+
+
+## Wood Density
+Wood Density (rho) was acquired from database XX...
+
+In case the species was not found, the mean WD of the genus was allocated. If tree not identified to genus, the mean of the WD of the plot was selected.
+
+```{r}
+# Stats ho many were to species, genus, plot
+summary(cars$dist)
+summary(cars$speed)
+```
+
+
+## AGB calculation
+The formula was....
+
+
+
+## Error propagation
+Markov chains...
+
+
+
+
+
+# TCH lidar
+...
+
+
+
+
+
+# Basal Area & WD_plot
+...
+
+
+
+
+# Modelling
+...
+
+
+
+
+
+
+# Project description
 
 whose model parameters a and b vary with forest types. Basal Area (BA) and wood density (ρ) will be coupled as sub-models to develop a generalised model that can be applicable across different forest types:
 
@@ -33,7 +184,4 @@ $$
 ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin & Thomas, 2011). 
 
 LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.
-
-
-## Map with field plots used
 

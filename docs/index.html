@@ -13,7 +13,6 @@
 
 <title>Carbon project</title>
 
-<script src="site_libs/header-attrs-2.6/header-attrs.js"></script>
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -388,23 +387,142 @@ div.tocify {
 </div>
 
 
-<div id="introduction" class="section level2">
-<h2>Introduction</h2>
 <style>
 body {
 text-align: justify}
 </style>
 <p>Welcome, the purpose of this website is to keep you updated!</p>
-<p>I have forest inventory data and lidar from Paisagem Sustentaveis and Marcus Vinicio Neves d’Oliveira. Other datasets are yet to come.</p>
-<p>The following map shows the locations of the plots I am using for the analysis:</p>
-<iframe src="https://www.google.com/maps/d/u/0/embed?mid=1B8fDAx8gQiWn6hD3BzQkBcjWoqBajU1E" width="640" height="480"></iframe>
-<p>whose model parameters a and b vary with forest types. Basal Area (BA) and wood density (ρ) will be coupled as sub-models to develop a generalised model that can be applicable across different forest types: <span class="math display">\[
-ACD = a · TCH^d · BA^c · ρ^b; 
-\]</span> where BA and ρ sub-models are parametrised with TCH beforehand (Asner &amp; Mascaro, 2014). ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin &amp; Thomas, 2011).</p>
-<p>LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.</p>
+<p>While other datasets are yet to come, I am working with forest inventory data plus matching lidar from <strong>Paisagens Sustentáveis</strong> and <strong>Marcus Vinicio Neves d’Oliveira</strong> in Brazil.</p>
+<div id="cleaning-data" class="section level2">
+<h2>Cleaning data</h2>
+<p>Inventory datasets were compiled and standardised. Taxonomic errors were corrected using the Taxonomic Name Resolution Service v5.0 (<a href="https://tnrs.biendata.org/" class="uri">https://tnrs.biendata.org/</a>).</p>
+<p>All inventories matching with lidar (<code>50</code>plots/tansects in <code>50</code> locations) were selected, but some data were excluded sequentially:</p>
+<ul>
+<li><p><code>50</code> inventory transects (<em>i.e.</em>, 500 meter transects in Paisagen Sustentáveis).</p></li>
+<li><p><code>50</code> re-sampled inventory plots. I selected most recent plots (not always) with the least time difference from its lidar survey.</p></li>
+<li><p><code>50</code> plots which had more than half of the trees dead and less than 10 individuals.</p></li>
+<li><p><code>50</code> dead individuals were removed. <em>(I may add them later into biomass estimations, <code>50</code> out of <code>50</code> (<code>50</code>%) dead trees have DBH measurements)</em>.</p></li>
+<li><p><code>50</code> lianas.</p></li>
+<li><p><code>50</code> trees without DBH measurement.</p></li>
+</ul>
+<p>Finally, what’s left for the analysis are <code>50</code> individuals in <code>50</code> plots in <code>50</code> locations:</p>
+<pre class="r"><code>#Add a table or something... with plot size...
+summary(cars$dist)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2.00   26.00   36.00   42.98   56.00  120.00</code></pre>
+<pre class="r"><code>summary(cars$speed)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     4.0    12.0    15.0    15.4    19.0    25.0</code></pre>
 </div>
-<div id="map-with-field-plots-used" class="section level2">
-<h2>Map with field plots used</h2>
+<div id="map-of-inventory-and-lidar-boundaries" class="section level2">
+<h2>Map of inventory and lidar boundaries</h2>
+<p>The following map shows plot locations and lidar transects available for the analysis:</p>
+<iframe src="https://www.google.com/maps/d/u/0/embed?mid=1B8fDAx8gQiWn6hD3BzQkBcjWoqBajU1E" width="640" height="480"></iframe>
+</div>
+<div id="agb-estimations" class="section level1">
+<h1>AGB estimations</h1>
+<p>In order to calculate Above-ground biomass (AGB) from field inventories, allomtric ecuations are used. In this case, Chave et al. (201X) equation 4 was used: <span class="math display">\[
+AGB = DBH^2...
+\]</span> Further cleaning of data…</p>
+<div id="dbh-diameter-at-breast-height" class="section level2">
+<h2>DBH (Diameter at Breast Height)</h2>
+<p>Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees &gt;35cm DBH in the whole plot area and &gt;10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m subplot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.</p>
+<p>Add image? Yes…</p>
+<pre class="r"><code>#Add table of min DBH in plots (excel)
+summary(cars$dist)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2.00   26.00   36.00   42.98   56.00  120.00</code></pre>
+<pre class="r"><code>summary(cars$speed)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     4.0    12.0    15.0    15.4    19.0    25.0</code></pre>
+<p>Minimum DBH threshold is consisteng in Paisagens Sustentáveis where few DBHs are below 10 cm, therefore I considered them typing errors. I thought of giving them the mean DBH value for the species but I ended up excluding them for the moment.</p>
+<p>Data in MarVin is not fully consistent and minimum DBH threshold seem to go from 5cm, but not all plots. <em>I need to get proper metadata from him.</em> Also, there are few points below 5cm which I consider they are typos.</p>
+<pre class="r"><code>#Add a table with DBH cut() and owner
+summary(cars$dist)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2.00   26.00   36.00   42.98   56.00  120.00</code></pre>
+<pre class="r"><code>summary(cars$speed)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     4.0    12.0    15.0    15.4    19.0    25.0</code></pre>
+<p>Now, to make projects comparable for the moment, all trees DBH &lt; 10cm were excluded (<code>50</code> ind), but this will probably change to a minimum of 5cm DBH in the future, using expansion factors for AGB in plots with no individuals below 10cm. This because it will be a problem <em>e.g.</em> when comparing our data with Asner &amp; Mascaro (201X)’s which go from 5cm.</p>
+<p>This is the distribution of DBH in our data (<em>i.e.</em>, DBH&lt;10cm):</p>
+<pre class="r"><code>#Add histogramof DBH
+summary(cars$dist)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2.00   26.00   36.00   42.98   56.00  120.00</code></pre>
+<pre class="r"><code>summary(cars$speed)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     4.0    12.0    15.0    15.4    19.0    25.0</code></pre>
+</div>
+<div id="height" class="section level2">
+<h2>Height</h2>
+<p>Height values are few among inventories. Only PaiSus had some height values, whereas MarVin data had none.</p>
+<pre class="r"><code># add number of height values in data, etc
+summary(cars$dist)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2.00   26.00   36.00   42.98   56.00  120.00</code></pre>
+<pre class="r"><code>summary(cars$speed)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     4.0    12.0    15.0    15.4    19.0    25.0</code></pre>
+<p>Therefore, I estimated height of the trees from DBH measurements by constructing local height models.</p>
+<div id="local-height-models" class="section level3">
+<h3>Local Height Models</h3>
+<p>The relationship between DBH and height are different for trees and palms, so I each group had its own local height model. There were ~30 crazy outliers which I did not account for when building the models. <em>e.g.</em>, <span class="math inline">\(height = 48.2m\)</span> when <span class="math inline">\(DBH = 12.7 cm\)</span>.</p>
+<pre class="r"><code>#Add plot H ~ DBH for trees &amp; palms. show outliers?
+summary(cars$dist)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2.00   26.00   36.00   42.98   56.00  120.00</code></pre>
+<pre class="r"><code>summary(cars$speed)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     4.0    12.0    15.0    15.4    19.0    25.0</code></pre>
+<div id="trees" class="section level4">
+<h4>Trees</h4>
+</div>
+<div id="palms" class="section level4">
+<h4>Palms</h4>
+</div>
+</div>
+</div>
+<div id="wood-density" class="section level2">
+<h2>Wood Density</h2>
+<p>Wood Density (rho) was acquired from database XX…</p>
+<p>In case the species was not found, the mean WD of the genus was allocated. If tree not identified to genus, the mean of the WD of the plot was selected.</p>
+<pre class="r"><code># Stats ho many were to species, genus, plot
+summary(cars$dist)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2.00   26.00   36.00   42.98   56.00  120.00</code></pre>
+<pre class="r"><code>summary(cars$speed)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     4.0    12.0    15.0    15.4    19.0    25.0</code></pre>
+</div>
+<div id="agb-calculation" class="section level2">
+<h2>AGB calculation</h2>
+<p>The formula was….</p>
+</div>
+<div id="error-propagation" class="section level2">
+<h2>Error propagation</h2>
+<p>Markov chains…</p>
+</div>
+</div>
+<div id="tch-lidar" class="section level1">
+<h1>TCH lidar</h1>
+<p>…</p>
+</div>
+<div id="basal-area-wd_plot" class="section level1">
+<h1>Basal Area &amp; WD_plot</h1>
+<p>…</p>
+</div>
+<div id="modelling" class="section level1">
+<h1>Modelling</h1>
+<p>…</p>
+</div>
+<div id="project-description" class="section level1">
+<h1>Project description</h1>
+<p>whose model parameters a and b vary with forest types. Basal Area (BA) and wood density (ρ) will be coupled as sub-models to develop a generalised model that can be applicable across different forest types:</p>
+<p><span class="math display">\[
+ACD_{plot} = a · TCH^d · BA^c · ρ^b; 
+\]</span> ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin &amp; Thomas, 2011).</p>
+<p>LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.</p>
 </div>
 
 
