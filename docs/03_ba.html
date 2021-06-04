@@ -11,7 +11,7 @@
 
 
 
-<title>Estimating carbon from lidar</title>
+<title>Basal Area &amp; Wood Density</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -384,8 +384,8 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Estimating carbon from lidar</h1>
-<h4 class="date">Last update: 01-Jun-2021</h4>
+<h1 class="title toc-ignore">Basal Area &amp; Wood Density</h1>
+<h4 class="date">Last update 11/05/2021</h4>
 
 </div>
 
@@ -395,84 +395,9 @@ body {
 text-align: justify}
 </style>
 <p><br></p>
-<p>Hi! I created this website to keep you updated with the project! First, I’ll give an overview of what we want to do and then the different processes and analysis I have done so far. Main tabs of this website explain further how I processed data for each of the elements of the model (<em>i.e.</em>, AGB, TCH, BA &amp; ρ) as well as the modelling process.</p>
-<p><br></p>
-<div id="project-overview" class="section level1">
-<h1><span class="header-section-number">1</span> Project overview</h1>
-<p>The main goal is to generate equations to estimate aboveground biomass/carbon (AGB/ACD) from lidar. We want to better understand variation in Wood Density (ρ) and Basal Area (BA) to improve the Top-of-the-Canopy Height (TCH) - Biomass relationships. The aim is to generate the following model:</p>
-<p><span class="math display">\[
-ACD_{plot} = a · TCH^d · BA^c · ρ^b
-\]</span></p>
-<p>ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin &amp; Thomas, 2011).</p>
-<p>LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.</p>
-<p><br></p>
-</div>
-<div id="data" class="section level1">
-<h1><span class="header-section-number">2</span> Data</h1>
-<div id="data-collection" class="section level2">
-<h2><span class="header-section-number">2.1</span> Data collection</h2>
-<p>While other datasets are yet to come, I am working with forest inventories plus matching lidar from <strong>Paisagens Sustentáveis</strong> (<code>PaiSus</code>) and <strong>Marcus Vinicio Neves d’Oliveira</strong> (<code>MarVin</code>) in Brazil.</p>
-<p>Other colaborators.. Jean and Eric… EBA project, etc.</p>
-<p><br></p>
-</div>
-<div id="cleaning-inventory-data" class="section level2">
-<h2><span class="header-section-number">2.2</span> Cleaning inventory data</h2>
-<p>Inventory datasets were compiled and standardised from collaborators shown above. Taxonomic errors were corrected using the Taxonomic Name Resolution Service v5.0 (<a href="https://tnrs.biendata.org/" class="uri">https://tnrs.biendata.org/</a>).</p>
-<p>All inventories matching with lidar (<code>743</code>plots/tansects in <code>26</code> locations) were selected, but some data were excluded in the following sequence:</p>
-<ul>
-<li><p><code>112</code> inventory transects (<em>i.e.</em>, 500 meter transects in Paisagen Sustentáveis).</p></li>
-<li><p><code>177</code> re-sampled plots. I selected most recent (not always) with the least time difference from its lidar survey.</p></li>
-<li><p><code>8</code> plots which had more than half of the trees dead and less than 10 individuals.</p></li>
-<li><p><code>3590</code> dead individuals were removed. <em>(I may add them later into biomass estimations, <code>3377</code> (<code>94</code>%) dead trees have DBH measurements)</em>.</p></li>
-<li><p><code>122</code> lianas.</p></li>
-<li><p><code>19</code> trees without DBH measurement.</p></li>
-</ul>
-<p><br></p>
-<p>Finally, what’s left for the analysis are <code>65039</code> individuals in <code>446</code> plots in <code>24</code> locations:</p>
-<pre><code>## Number of individuals by size and project:</code></pre>
-<pre><code>##         
-##          100x100 40x40 50x50
-##   MarVin   43533     0  6358
-##   PaiSus       0   583 14565</code></pre>
-<pre><code>## Number of plots by size and project:</code></pre>
-<pre><code>##         
-##          100x100 40x40 50x50
-##   MarVin      86     0    50
-##   PaiSus       0     9   301</code></pre>
-<pre><code>## Number of plots by size and project-location:</code></pre>
-<pre><code>##                 
-##                  100x100 40x40 50x50
-##   MarVin EMB_A01       4     0     0
-##   MarVin FEA_A01       0     0    50
-##   MarVin FEA_A02      10     0     0
-##   MarVin FEG_A01      15     0     0
-##   MarVin FEL_A01      15     0     0
-##   MarVin FEM_A01      15     0     0
-##   MarVin SFI_A01      15     0     0
-##   MarVin TKX_A01      12     0     0
-##   PaiSus ANA_A01       0     0    32
-##   PaiSus AND_A01       0     0    20
-##   PaiSus BON_A01       0     0    10
-##   PaiSus CAU_A01       0     0    85
-##   PaiSus DUC_A01       0     0    17
-##   PaiSus FN_A01        0     0    28
-##   PaiSus HUM_A01       0     0    10
-##   PaiSus JAM_A02       0     0    19
-##   PaiSus JAM_A03       0     0     4
-##   PaiSus PAR_A01       0     0    39
-##   PaiSus SAN_A01       0     0     8
-##   PaiSus SAN_A02       0     0     6
-##   PaiSus SFX_A01       0     9     0
-##   PaiSus TAL_A01       0     0     5
-##   PaiSus TAP_A01       0     0     9
-##   PaiSus TAP_A03       0     0     9</code></pre>
-<p><br></p>
-</div>
-<div id="map-of-inventory-and-lidar-boundaries" class="section level2">
-<h2><span class="header-section-number">2.3</span> Map of inventory and lidar boundaries</h2>
-<p>The following map shows plot locations and lidar transects available for the analysis: <em>(NOTE: this is an outdated map. MarVin are not yet included)</em></p>
-<iframe src="https://www.google.com/maps/d/u/0/embed?mid=1B8fDAx8gQiWn6hD3BzQkBcjWoqBajU1E" width="640" height="480"></iframe>
-</div>
+<div id="basal-area-wd_plot" class="section level1">
+<h1><span class="header-section-number">1</span> Basal Area &amp; WD_plot</h1>
+<p>…</p>
 </div>
 
 

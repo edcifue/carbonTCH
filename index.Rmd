@@ -1,187 +1,164 @@
 ---
-title: "Carbon project"
-date: "Last update 11/05/2021"
+title: "Estimating carbon from lidar"
+date: "Last update: 01-Jun-2021"
 output: 
       html_document:
           toc: true
           toc_float: true
 ---
-
 <style>
 body {
 text-align: justify}
 </style>
 
-Welcome, the purpose of this website is to keep you updated!
-
-While other datasets are yet to come, I am working with forest inventory data plus matching lidar from **Paisagens Sustentáveis** and **Marcus Vinicio Neves d'Oliveira** in Brazil. 
+<br>
 
 
-## Cleaning data
-Inventory datasets were compiled and standardised. Taxonomic errors were corrected using the Taxonomic Name Resolution Service v5.0 (https://tnrs.biendata.org/). 
 
-All inventories matching with lidar (`````r nrow(cars)`````plots/tansects in `````r nrow(cars)````` locations) were selected, but some data were excluded sequentially:
+Hi! I created this website to keep you updated with the project! First, I'll give an overview of what we want to do and then the different processes and analysis I have done so far. Main tabs of this website explain further how I processed data for each of the elements of the model (*i.e.*, AGB, TCH, BA & ρ) as well as the modelling process.
 
-- ```r nrow(cars)``` inventory transects (*i.e.*, 500 meter transects in Paisagen Sustentáveis).
+<br>
 
-- ```r nrow(cars)``` re-sampled inventory plots. I selected most recent plots (not always) with the least time difference from its lidar survey.
+# Project overview
 
-- ```r nrow(cars)``` plots which had more than half of the trees dead and less than 10 individuals.
-
-- ```r nrow(cars)``` dead individuals were removed.  *(I may add them later into biomass estimations, ```r nrow(cars)``` out of ```r nrow(cars)``` (```r nrow(cars)```%) dead trees have DBH measurements)*.
-
-- ```r nrow(cars)``` lianas.
-
-- ```r nrow(cars)``` trees without DBH measurement.
+The main goal is to generate equations to estimate aboveground biomass/carbon (AGB/ACD) from lidar. We want to better understand variation in Wood Density (ρ) and Basal Area (BA) to improve the Top-of-the-Canopy Height (TCH) - Biomass relationships. The aim is to generate the following model:
 
 
-Finally, what's left for the analysis are ```r nrow(cars)``` individuals in ```r nrow(cars)``` plots in ```r nrow(cars)``` locations:
+$$
+ACD_{plot} = a · TCH^d · BA^c · ρ^b
+$$
 
-```{r}
-#Add a table or something... with plot size...
-summary(cars$dist)
-summary(cars$speed)
+ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin & Thomas, 2011). 
+
+LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.
+
+<br>
+
+# Data
+
+## Data collection
+
+While other datasets are yet to come, I am working with forest inventories plus matching lidar from **Paisagens Sustentáveis** (`PaiSus`) and **Marcus Vinicio Neves d'Oliveira** (`MarVin`) in Brazil. 
+
+Other colaborators.. Jean and Eric... EBA project, etc.
+
+<br>
+
+## Cleaning inventory data
+
+```{r echo=F, results='hide'}
+INV <- read.csv('/Volumes/imox-SSD/Rproj_carbon 2021-05-29/data/inventories/plots_clean/all_inventories_v1_resoltaxo.csv', stringsAsFactors = F)
+np0 <- length(table(INV$parcela))
+nl0 <- length(table(INV$location))
+
+ntranp <- table(unique(INV[grep('500',INV$sizeplot), c('parcela','sizeplot')])$sizeplot)
+INV <- INV[!grepl('500',INV$sizeplot),]
+
+## db.parcela creation and selecting the plots for the analysis
+db.parcela <- unique(INV[c("state","Name","location","plotID","sizeplot","parcela","year","owner")])
+(npini <- nrow(db.parcela))
+
+cndbp <-  !(db.parcela$location=='ANA_A01' & db.parcela$year==2018) & 
+          !(db.parcela$location=='CAU_A01' & db.parcela$year==2014) & 
+          !(db.parcela$location=='CAU_A01' & db.parcela$plotID%in%c('T01_P3','T01_P4','T05_P1')) & 
+          !(db.parcela$location=='JAM_A02' & grepl('T03|T01_P1',db.parcela$plotID)) & 
+          !(db.parcela$location=='PAR_A01' & db.parcela$plotID=='P13') & 
+          !(db.parcela$location=='SAN_A01' & db.parcela$year==2016) & 
+          !(db.parcela$location=='SAN_A02' & db.parcela$plotID=='G01_P04') & 
+          !db.parcela$location=='TAC_A01' & 
+          !(db.parcela$location=='TAP_A01' & db.parcela$year%in%c(2018,2016)) & 
+          !(db.parcela$location=='TAP_A03' & db.parcela$plotID=='P59')
+631-32-88-3-5-1-8-1-27-11-1
+db.parcela <- db.parcela[cndbp,]
+npfin <- nrow(db.parcela) # Se quitaron 177 parcelas
+npini-npfin
+
+INV <- INV[INV$parcela%in%db.parcela$parcela,]
+
+# Number of individuals
+z <- data.frame(table(INV$parcela))
+(names(z) <- c('parcela','n'))
+db.parcela <- merge(db.parcela, z, by = 'parcela')
+
+# Number of Dead
+z <- table(INV$parcela,INV$dead)
+db.parcela <- merge(db.parcela, data.frame(alive=z[,1], dead=z[,2], parcela=row.names(z)), by = 'parcela')
+db.parcela$dead.percent <- round(db.parcela$dead/db.parcela$n*100,1)
+
+table(INV$dead, useNA = 'ifany')
+table(!is.na(INV$DBH[INV$dead])) # there are many dead individuals with DBH
+
+npdead <- nrow(db.parcela[db.parcela$dead.percent >= 50 & db.parcela$n <= 10,])
+db.parcela <- db.parcela[!(db.parcela$dead.percent >= 50 & db.parcela$n <= 10),] # 8 plots less. Aca se perdieron unas parcelas porque todos sus individuos estan muertos (ie, algunas de FN)
+INV <- INV[INV$parcela%in%db.parcela$parcela,]
+
+niddbh <- table(!is.na(INV$DBH[INV$dead])) # there are many dead individuals with DBH
+INV <- INV[!INV$dead,] 
+
+length(db.parcela$parcela)==length(unique(INV$parcela))
+table(db.parcela$parcela%in%unique(INV$parcela))
+
+table(INV$tree.type, useNA = 'ifany')
+niL <- nrow(INV[INV$tree.type=='L',])
+INV <- INV[INV$tree.type!='L',]
+
+##Number of DBH=NA
+table(is.na(INV$DBH))
+ninadbh <- nrow(INV[is.na(INV$DBH),])
+INV <- INV[!is.na(INV$DBH),]
+
+
 ```
 
+Inventory datasets were compiled and standardised from collaborators shown above. Taxonomic errors were corrected using the Taxonomic Name Resolution Service v5.0 (https://tnrs.biendata.org/). 
+
+All inventories matching with lidar (```r np0```plots/tansects in ```r nl0``` locations) were selected, but some data were excluded in the following sequence:
+
+- ```r sum(ntranp)``` inventory transects (*i.e.*, 500 meter transects in Paisagen Sustentáveis).
+
+- ```r npini-npfin``` re-sampled plots. I selected most recent (not always) with the least time difference from its lidar survey.
+
+- ```r npdead``` plots which had more than half of the trees dead and less than 10 individuals.
+
+- ```r sum(niddbh)``` dead individuals were removed.  *(I may add them later into biomass estimations, ```r niddbh[2]``` (```r round(niddbh[2]/sum(niddbh)*100,0)```%) dead trees have DBH measurements)*.
+
+- ```r niL``` lianas.
+
+- ```r ninadbh``` trees without DBH measurement.
+
+<br>
+
+Finally, what's left for the analysis are ```r nrow(INV)``` individuals in ```r length(unique(INV$parcela))``` plots in ```r length(unique(INV$location))``` locations:
+
+```{r echo=F}
+#Add a table or something... with plot size...
+message('Number of individuals by size and project:')
+table(INV$owner,INV$sizeplot)
+
+message('Number of plots by size and project:')
+table(db.parcela$owner,db.parcela$sizeplot)
+
+message('Number of plots by size and project-location:')
+table(paste(db.parcela$owner,db.parcela$location),db.parcela$sizeplot)
+
+```
+
+<br>
+
 ## Map of inventory and lidar boundaries
-The following map shows plot locations and lidar transects available for the analysis:
+
+The following map shows plot locations and lidar transects available for the analysis: *(NOTE: this is an outdated map. MarVin are not yet included)*
+
+
+
 ```{=html}
 <iframe src="https://www.google.com/maps/d/u/0/embed?mid=1B8fDAx8gQiWn6hD3BzQkBcjWoqBajU1E" width="640" height="480"></iframe>
 ```
 
 
 
-# AGB estimations
-
-In order to calculate Above-ground biomass (AGB) from field inventories, allomtric ecuations are used. In this case, Chave et al. (201X) equation 4 was used:
-$$
-AGB = DBH^2...
-$$
-Further cleaning of data...
-
-
-## DBH (Diameter at Breast Height)
-
-Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees >35cm DBH in the whole plot area and >10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m subplot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.
-
-Add image? Yes...
-
-```{r}
-#Add table of min DBH in plots (excel)
-summary(cars$dist)
-summary(cars$speed)
-```
-
-
-Minimum DBH threshold is consisteng in Paisagens Sustentáveis where few DBHs are below 10 cm, therefore I considered them typing errors. I thought of giving them the mean DBH value for the species but I ended up excluding them for the moment.
-
-Data in MarVin is not fully consistent and minimum DBH threshold seem to go from 5cm, but not all plots. *I need to get proper metadata from him.* Also, there are few points below 5cm which I consider they are typos.
-
-```{r}
-#Add a table with DBH cut() and owner
-summary(cars$dist)
-summary(cars$speed)
-```
-
-Now, to make projects comparable for the moment, all trees DBH < 10cm were excluded (```r nrow(cars)``` ind), but this will probably change to a minimum of 5cm DBH in the future, using expansion factors for AGB in plots with no individuals below 10cm. This because it will be a problem *e.g.* when comparing our data with Asner & Mascaro (201X)'s which go from 5cm.
-
-This is the distribution of DBH in our data (*i.e.*, DBH<10cm):
-```{r}
-#Add histogramof DBH
-summary(cars$dist)
-summary(cars$speed)
-```
-
-
-## Height
-
-Height values are few among inventories. Only PaiSus had some height values, whereas MarVin data had none.
-
-```{r}
-# add number of height values in data, etc
-summary(cars$dist)
-summary(cars$speed)
-```
-
-Therefore, I estimated height of the trees from DBH measurements by constructing local height models.
-
-
-### Local Height Models
-
-The relationship between DBH and height are different for trees and palms, so I each group had its own local height model. There were ~30 crazy outliers which I did not account for when building the models. *e.g.*, $height = 48.2m$ when $DBH = 12.7 cm$.
-
-```{r}
-#Add plot H ~ DBH for trees & palms. show outliers?
-summary(cars$dist)
-summary(cars$speed)
-```
-
-
-#### Trees
 
 
 
 
-
-#### Palms
-
-
-
-
-
-## Wood Density
-Wood Density (rho) was acquired from database XX...
-
-In case the species was not found, the mean WD of the genus was allocated. If tree not identified to genus, the mean of the WD of the plot was selected.
-
-```{r}
-# Stats ho many were to species, genus, plot
-summary(cars$dist)
-summary(cars$speed)
-```
-
-
-## AGB calculation
-The formula was....
-
-
-
-## Error propagation
-Markov chains...
-
-
-
-
-
-# TCH lidar
-...
-
-
-
-
-
-# Basal Area & WD_plot
-...
-
-
-
-
-# Modelling
-...
-
-
-
-
-
-
-# Project description
-
-whose model parameters a and b vary with forest types. Basal Area (BA) and wood density (ρ) will be coupled as sub-models to develop a generalised model that can be applicable across different forest types:
-
-$$
-ACD_{plot} = a · TCH^d · BA^c · ρ^b; 
-$$
-ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin & Thomas, 2011). 
-
-LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.
 

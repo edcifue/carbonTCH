@@ -2,4 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
-data
+data/*
+index.Rmd
+01_agb.Rmd
+02_tch.Rmd
+03_ba.Rmd
+04_models.Rmd
+docs/data/*

@@ -1,17 +1,21 @@
 name: "my-website"
 output_dir: "docs"
 navbar:
-  title: "My Website"
+  title: "Carbon~Lidar"
   left:
-    - text: "Carbon project"
+    - text: "The project"
       href: index.html
-    - text: "Descriptive analysis of field data"
-      href: descriptives.html
-    - text: "Models"
-      href: models.html
-    - text: "Inventory data"
-      href: inventories.html
+    - text: "AGB-inventories"
+      href: 01_agb.html
+    - text: "TCH-lidar"
+      href: 02_tch.html
+    - text: "BA & ρ"
+      href: 03_ba.html
+    - text: "Modelling"
+      href: 04_models.html
+#output: word_document
 output:
   html_document:
     theme: cosmo
     highlight: textmate
+    number_sections: TRUE

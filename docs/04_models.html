@@ -11,7 +11,7 @@
 
 
 
-<title>Descriptive analysis of field data</title>
+<title>Models</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -353,21 +353,24 @@ div.tocify {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">My Website</a>
+      <a class="navbar-brand" href="index.html">Carbon~Lidar</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="index.html">Carbon project</a>
+  <a href="index.html">The project</a>
 </li>
 <li>
-  <a href="descriptives.html">Descriptive analysis of field data</a>
+  <a href="01_agb.html">AGB-inventories</a>
 </li>
 <li>
-  <a href="models.html">Models</a>
+  <a href="02_tch.html">TCH-lidar</a>
 </li>
 <li>
-  <a href="inventories.html">Inventory data</a>
+  <a href="03_ba.html">BA &amp; ρ</a>
+</li>
+<li>
+  <a href="04_models.html">Modelling</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -381,7 +384,7 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Descriptive analysis of field data</h1>
+<h1 class="title toc-ignore">Models</h1>
 <h4 class="date">Last update 11/05/2021</h4>
 
 </div>
@@ -391,12 +394,98 @@ div.tocify {
 body {
 text-align: justify}
 </style>
-<p>In this section you can find some descriptive analysis of the field plots data. This information is related to the plots characteristics (e.g DBH, wood density, basal area, height, number of individuals, number of taxa and ACD). This information could be seen in more detail for each plot in the window “INV02entories data”.</p>
-<div id="main" class="section level1">
-<h1>Main</h1>
-<div id="subtilte" class="section level2">
-<h2>subtilte</h2>
+<p><br></p>
+<p>I’m learning Maximum Likelihood Estimation…</p>
+<div id="davids-comment" class="section level1">
+<h1><span class="header-section-number">1</span> David’s comment:</h1>
+<p><span class="math display">\[ACD \sim  a· TCH^b\]</span></p>
+<p>Nls or LSR of log-log transformed data. Making a and b a functional of environmental information (e.g TPI — topographic position index)</p>
+<p><span class="math display">\[ACD \sim  a · wood density · TCH^b  + e \]</span></p>
+<p><span class="math display">\[e \sim N(0,sigma + sigma1·TCH)\]</span></p>
+<p>Coomes wind in New Zealand — Maximum Likelihood Estimation — log likelihood</p>
+<pre class="r"><code>start = list(a = .3,  b = 1,  sigma = 0.01, sigma1 = 0.001)</code></pre>
+<p>Multiply likelihoods === summing log-likelihood —- algorithm maximizes the log likelihood.</p>
+<p>A, b and wood density vary with environmental variables. Cristiano or/and Eric’s many layers.</p>
+<p><span class="math display">\[ACD \sim  a·(1+a1·TPI + a2·rainfall) · Wood\ Density · TCH^b·(1+ b1·TPI + b2·rainfall)  + e\]</span> <span class="math display">\[e ~ N(0,sigma + sigma1·TCH)\]</span></p>
+<p><br></p>
 </div>
+<div id="davidsacha-mle-code" class="section level1">
+<h1><span class="header-section-number">2</span> David/Sacha MLE code</h1>
+<p>Here is the code for maximum likelihood estimation from David/Sacha:</p>
+<pre class="r"><code># David Coomes August 2021, analyses of Sacha&#39;s data
+
+b*Canopy_area^a*(1+ c*Pp )*(1+d*SRe)
+b*Canopy_area^a*(1+ c*Pp*(1+c1*Pp) )*(1+d*SRe))
+b*Canopy_area^a*(1+ c*Ppn +c1*Pps + c2*Pqf)*(1+d*SRe)
+
+# load libraries
+library(bbmle)
+
+#functions
+RMSE&lt;-function(Obs,Pred){
+  sqrt(mean((Obs-Pred)^2) ) / mean(Obs) *100 }
+bias&lt;-function(Obs,Pred){
+  mean(Pred-Obs)/mean(Obs)*100 }
+R2 &lt;-function(Obs,Pred){ 1 - sum((Obs-Pred)^2) / sum((Obs-mean(Obs))^2) }
+
+# amalgamate data dispersed over three files
+setwd(&quot;C://Users//david coomes//Downloads&quot;)
+XXX &lt;- read.table(&quot;modispixeldata.CSV&quot;, sep =&quot;,&quot;, header =T)
+XXX &lt;- read.table(&quot;fundivplotdata.CSV&quot;, sep =&quot;,&quot;, header =T)
+names(XXX)
+
+Y &lt;- XXX[, c(&quot;AWPmean.y&quot;, &quot;Ppn&quot;, &quot;Pps&quot;,&quot;Pqf&quot;,&quot;Pqi&quot;, &quot;oakpine&quot;, &quot;Pp&quot;, &quot;Canopy_area&quot;, &quot;AWPsens&quot;)]
+
+Y$SRe = with(Y, exp(-(Ppn*log(Ppn) + Pps*log(Pps)+Pqf*log(Pqf)+Pqi*log(Pqi))))
+summary(Y$SRe)
+
+names(Y)
+
+# quick look at correlations
+summary(lm(AWPmean.y ~ oakpine+Canopy_area + shannoncanopy, data = Y))
+summary(lm(log(AWPmean.y) ~ log(Canopy_area), data = Y))
+summary(lm(AWPmean.y ~ Canopy_area, data = Y))
+
+summary(lm(Canopy_area ~Pp +SRe, data = Y))
+summary(lm(Canopy_area ~SRe, data = Y))
+summary(lm(Canopy_area ~Pp, data = Y))
+
+summary(lm(Pp~ SRe, data = Y))
+
+plot(Y$AWPmean.y, Y$Canopy_area)
+plot(Y$Canopy_area,Y$Pp)
+
+
+#################################
+## model of CA, Pp and SRe influence on AWP
+
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), c = rep(NA,n), c1 = rep(NA,n), c2 = rep(NA,n), d = rep(NA,n), g = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL &lt;- function(a, b, c, d,sigma) {
+    with(Y[-i,],
+         {
+           R = AWPmean.y - (b*Canopy_area^a)*(1+ c*Pp )*(1+d*SRe)
+           R = suppressWarnings(dnorm(R, 0, sigma, log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 &lt;- mle2(LL, start = list(a = 1, b =0.00038, c =0.1, d= 0.01, sigma =.17), method = &quot;L-BFGS-B&quot;,
+               lower = c(-Inf, -Inf, -Inf, -Inf, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = Y$AWPmean.y[i]
+  Coeffs$pred[i] = (Y$Canopy_area[i]*fit1@coef[2]^fit1@coef[1])*(1 + fit1@coef[3]*Y$Pp[i])*(1 + fit1@coef[3]*Y$Pp[i])*(1+fit1@coef[4]*(Y$SRe))
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$c[i] = fit1@coef[3]
+  Coeffs$d[i] = fit1@coef[4]
+  Coeffs$sigma[i] = fit1@coef[5]
+}
+
+summary(fit1)</code></pre>
 </div>
 
 

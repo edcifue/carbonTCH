@@ -1,6 +1,0 @@
----
-title: "Inventories data"
-output: html_document
----
-
-Hola este es un mensaje
