@@ -1,0 +1,180 @@
+---
+title: "Above-Ground Biomass (AGB)"
+date: "Last update 11/05/2021"
+output: 
+      html_document:
+          toc: true
+          toc_float: true
+---
+<style>
+body {
+text-align: justify}
+</style>
+
+<br>
+
+# Background
+
+In order to calculate Above-ground biomass (AGB) from field inventories, allometric ecuations are used. In this case, we applied Chave et al. (2014) Eq. 4:
+
+$$AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}$$
+which relates AGB with Wood Density ($WD$), stem Diameter ($D$ or $DBH$) and Height ($H$) of each tree.
+
+<br>
+
+```{r echo=F, results='hide'}
+INV <- read.csv('/Volumes/imox-SSD/Rproj_carbon 2021-05-29/data/inventories/plots_clean/all_inventories_v2_filtered.csv')
+db.parcela <- read.csv('/Volumes/imox-SSD/Rproj_carbon 2021-05-29/data/inventories/plots_clean/db_parcela_v0.csv')
+```
+
+# Wood Density
+
+Wood Density (WD or ρ) was acquired from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the ```BIOMASS``` package in R.
+
+When WD for a species was not found, the mean WD of the genus was allocated. If an individual was not identified to genus, then the mean of the WD of the plot was selected.
+
+
+```{r echo=F, message=FALSE}
+## Get wood density -----
+require(BIOMASS)
+x <- dataWD <- getWoodDensity(
+  genus = INV$genus.tnrs,
+  species = INV$epit.tnrs,
+  stand = INV$parcela
+)
+INV <- cbind(INV,x[c('meanWD','sdWD','levelWD')])
+WD_level <- INV$levelWD
+WD_level[!WD_level%in%c('species','genus')] <- 'plot'
+
+
+table(INV$owner,WD_level)[,c(3,1,2)]
+table(WD_level)[c(3,1,2)]
+
+
+```
+
+<br>
+
+# DBH
+
+Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees >35cm DBH in the whole plot area and >10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m subplot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.
+
+
+<center>
+
+![*Sub-plot examples in some Paisagens Sustentáveis plots.*](images/01_example_sampling_design.png)
+
+</center>
+
+
+```{r, echo=F}
+
+#Add table of min DBH in plots (excel)
+
+```
+
+
+Minimum DBH threshold is consisteng in Paisagens Sustentáveis where few DBHs are below 10 cm, therefore I considered them typing errors. I thought of giving them the mean DBH value for the species but I ended up excluding them for the moment.
+
+Data in MarVin is not fully consistent and minimum DBH threshold seem to go from 5cm, but not all plots. *I need to get proper metadata from him.* Also, there are few points below 5cm which I consider they are typos.
+
+```{r echo=F}
+#Add a table with DBH cut() and owner
+message('Individuals by DBH class and project')
+table(INV$owner,cut(INV$DBH, breaks = c(0,5,10,35,Inf), right = F))
+
+```
+
+Now, to make projects comparable for the moment, all trees DBH < 10cm were excluded (```r nrow(cars)``` ind), but this will probably change to a minimum of 5cm DBH in the future, using expansion factors for AGB in plots with no individuals below 10cm. This because it will be a problem *e.g.* when comparing our data with Asner & Mascaro (201X)'s which go from 5cm.
+
+This is the distribution of DBH in our data (*i.e.*, DBH<10cm):
+
+```{r echo=F}
+INV <- INV[INV$DBH>=10,]
+hist(INV$DBH, breaks = 50, main = 'Histogram of DBH')
+```
+
+<br>
+
+# Height
+
+```{r echo=F}
+INV$height[INV$height<=0] <- NA
+
+Hbyow <- table(INV$owner,is.na(INV$height), useNA = 'ifany')[,2:1]
+Hbytp  <- table(INV$tree.type)
+Hbytp0 <- table(INV$tree.type[!is.na(INV$height)])
+Hbytp1 <- table(INV$tree.type[is.na(INV$height)])
+```
+
+Height values are few among inventories (```r nrow(INV[!is.na(INV$height),])``` out of ```r nrow(INV[is.na(INV$height),])```). Only PaiSus has height values, whereas MarVin has none.
+
+```{r echo=F}
+Hbyow
+```
+
+<br>
+
+## Local Height-Diameter Models
+
+I estimated height of the trees from DBH measurements by constructing local height models. The relationship between DBH and height are different for trees and palms, so I each group had its own local height model. There were ~30 crazy height-DBH relations (outliers) which I did not account for when building the models. *e.g.*, height = 48.2m when DBH = 12.7 cm.
+
+```{r echo=F, results=F}
+cnd <- INV$height>=33.6 & INV$DBH<=33 | INV$height<=2 | INV$height<=30 & INV$DBH>=120 | INV$height<=11 & INV$DBH>=51 | INV$height<=8 & INV$DBH>=28
+cnd[is.na(cnd)] <- FALSE
+
+plot(INV[INV$tree.type=='O',c('DBH','height')], col = densCols(INV[INV$tree.type=='O',c('DBH','height')]), pch = 20, xlim=c(0,250), ylim=c(0,60))
+points( INV[cnd & INV$tree.type=='O', c('DBH','height')], pch = 18)
+INV$height[cnd] <- NA
+```
+
+Models were generated using data from ```r Hbytp0[1]``` trees and ```r Hbytp0[2]``` palms.
+Then I predicted the height of ```r Hbytp1``` trees (```r round(Hbytp1[1]/Hbytp[1], digits=1)```%) and ```r Hbytp1[2]``` palm  (```r 00 #round(Hbytp1[2]/Hbytp[2], digits=1)```%).
+
+```{r echo=F}
+message('Individuals with height in locations')
+table(paste(INV$owner,INV$location),!is.na(INV$height))[,2:1]
+
+
+
+
+plot(INV[INV$tree.type=='O',c('DBH','height')], col = densCols(INV[INV$tree.type=='O',c('DBH','height')]), pch = 20, xlim=c(0,250), ylim=c(0,60))
+points(INV[INV$tree.type=='P',c('DBH','height')], pch = 20,
+       col = densCols(INV[INV$tree.type=='P',c('DBH','height')],
+                      colramp = colorRampPalette(c('lightpink','red'))))
+```
+
+
+Models were constructed using the `BIOMASS` package in R. We used 4 height-diameter modelling approaches:
+
+|method|equation| 
+|---|---|
+|log1|$log(H) = a+ b*log(D)$|
+|log2|$log(H) = a+ b*log(D) + c*log(D)^2$|
+|weibull|$H = a*(1-exp(-(D/b)^c))$|
+|michaelis|$H = (A * D)/(B + D)$|
+|
+
+Best model for trees and palms according to the RSE and the AIC value was *log2*.
+
+
+### Trees
+```{r}
+#Add Mtree and Mpalm with plots
+```
+
+
+### Palms
+
+```{r}
+#Add Mtree and Mpalm with plots
+```
+
+
+# AGB estimation
+The formula was....
+
+
+
+# Error propagation
+Markov chains...

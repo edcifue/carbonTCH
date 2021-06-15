@@ -1,0 +1,127 @@
+---
+title: "Models"
+date: "Last update 11/05/2021"
+output: 
+      html_document:
+          toc: true
+          toc_float: true
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+<br>
+
+I'm learning Maximum Likelihood Estimation...
+
+
+# David's comment:
+
+$$ACD \sim  a· TCH^b$$
+
+Nls or  LSR of log-log transformed data. 
+Making a and b a functional of environmental information (e.g TPI — topographic position index)  
+
+
+$$ACD \sim  a · wood density · TCH^b  + e $$
+
+$$e \sim N(0,sigma + sigma1·TCH)$$
+
+Coomes wind in New Zealand —  Maximum Likelihood Estimation — log likelihood 
+```{r eval=FALSE}
+start = list(a = .3,  b = 1,  sigma = 0.01, sigma1 = 0.001)
+```
+
+Multiply likelihoods === summing log-likelihood —- algorithm maximizes the log likelihood.
+
+A, b and wood density vary with environmental variables.  Cristiano or/and  Eric’s many layers.
+
+$$ACD \sim  a·(1+a1·TPI + a2·rainfall) · Wood\ Density · TCH^b·(1+ b1·TPI + b2·rainfall)  + e$$ 
+$$e ~ N(0,sigma + sigma1·TCH)$$
+
+<br>
+
+
+# David/Sacha MLE code
+
+Here is the code for maximum likelihood estimation from David/Sacha:
+
+```{r eval=FALSE}
+# David Coomes August 2021, analyses of Sacha's data
+
+b*Canopy_area^a*(1+ c*Pp )*(1+d*SRe)
+b*Canopy_area^a*(1+ c*Pp*(1+c1*Pp) )*(1+d*SRe))
+b*Canopy_area^a*(1+ c*Ppn +c1*Pps + c2*Pqf)*(1+d*SRe)
+
+# load libraries
+library(bbmle)
+
+#functions
+RMSE<-function(Obs,Pred){
+  sqrt(mean((Obs-Pred)^2) ) / mean(Obs) *100 }
+bias<-function(Obs,Pred){
+  mean(Pred-Obs)/mean(Obs)*100 }
+R2 <-function(Obs,Pred){ 1 - sum((Obs-Pred)^2) / sum((Obs-mean(Obs))^2) }
+
+# amalgamate data dispersed over three files
+setwd("C://Users//david coomes//Downloads")
+XXX <- read.table("modispixeldata.CSV", sep =",", header =T)
+XXX <- read.table("fundivplotdata.CSV", sep =",", header =T)
+names(XXX)
+
+Y <- XXX[, c("AWPmean.y", "Ppn", "Pps","Pqf","Pqi", "oakpine", "Pp", "Canopy_area", "AWPsens")]
+
+Y$SRe = with(Y, exp(-(Ppn*log(Ppn) + Pps*log(Pps)+Pqf*log(Pqf)+Pqi*log(Pqi))))
+summary(Y$SRe)
+
+names(Y)
+
+# quick look at correlations
+summary(lm(AWPmean.y ~ oakpine+Canopy_area + shannoncanopy, data = Y))
+summary(lm(log(AWPmean.y) ~ log(Canopy_area), data = Y))
+summary(lm(AWPmean.y ~ Canopy_area, data = Y))
+
+summary(lm(Canopy_area ~Pp +SRe, data = Y))
+summary(lm(Canopy_area ~SRe, data = Y))
+summary(lm(Canopy_area ~Pp, data = Y))
+
+summary(lm(Pp~ SRe, data = Y))
+
+plot(Y$AWPmean.y, Y$Canopy_area)
+plot(Y$Canopy_area,Y$Pp)
+
+
+#################################
+## model of CA, Pp and SRe influence on AWP
+
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), c = rep(NA,n), c1 = rep(NA,n), c2 = rep(NA,n), d = rep(NA,n), g = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, c, d,sigma) {
+    with(Y[-i,],
+         {
+           R = AWPmean.y - (b*Canopy_area^a)*(1+ c*Pp )*(1+d*SRe)
+           R = suppressWarnings(dnorm(R, 0, sigma, log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =0.00038, c =0.1, d= 0.01, sigma =.17), method = "L-BFGS-B",
+               lower = c(-Inf, -Inf, -Inf, -Inf, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = Y$AWPmean.y[i]
+  Coeffs$pred[i] = (Y$Canopy_area[i]*fit1@coef[2]^fit1@coef[1])*(1 + fit1@coef[3]*Y$Pp[i])*(1 + fit1@coef[3]*Y$Pp[i])*(1+fit1@coef[4]*(Y$SRe))
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$c[i] = fit1@coef[3]
+  Coeffs$d[i] = fit1@coef[4]
+  Coeffs$sigma[i] = fit1@coef[5]
+}
+
+summary(fit1)
+
+```

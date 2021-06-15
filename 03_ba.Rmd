@@ -1,0 +1,21 @@
+---
+title: "Basal Area & Wood Density"
+date: "Last update 11/05/2021"
+output: 
+      html_document:
+          toc: true
+          toc_float: true
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+<br>
+
+# Basal Area & WD_plot
+
+...
+
+
