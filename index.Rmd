@@ -28,9 +28,9 @@ $$
 ACD_{plot} = a · TCH^d · BA^c · ρ^b
 $$
 
-ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin & Thomas, 2011). 
+ACD will be calculated using field plot data by summing [above-ground biomass](01_agb.html) (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin & Thomas, 2011). 
 
-LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.
+LiDAR data will be used to [calculate TCH](02_tch.html), while [BA](03_ba.html#wood-density-(plot)) and [ρ (*aka* WD)](03_ba.html#basal-area-(plot)) are derived from field plot data. Our aim is to provide a better understanding on how BA and ρ affect ACD-TCH relationships to improve carbon estimations.
 
 <br>
 
@@ -38,7 +38,7 @@ LiDAR data will be used to calculate TCH, while BA and ρ are derived from field
 
 ## Data collection
 
-While other datasets are yet to come, I am working with forest inventories plus matching lidar from **Paisagens Sustentáveis** (`PaiSus`) and **Marcus Vinicio Neves d'Oliveira** (`MarVin`) in Brazil. 
+While other datasets are yet to come, I am working with forest inventories plus matching lidar from Paisagens Sustentáveis (**PaiSus**) and Marcus Vinicio Neves d'Oliveira (**MarVin**) in Brazil. 
 
 Other colaborators.. Jean and Eric... EBA project, etc.
 
@@ -47,7 +47,7 @@ Other colaborators.. Jean and Eric... EBA project, etc.
 ## Cleaning inventory data
 
 ```{r echo=F, results='hide'}
-INV <- read.csv('/Volumes/imox-SSD/Rproj_carbon 2021-05-29/data/inventories/plots_clean/all_inventories_v1_resoltaxo.csv', stringsAsFactors = F)
+INV <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/all_inventories_v1_resoltaxo.csv', stringsAsFactors = F)
 np0 <- length(table(INV$parcela))
 nl0 <- length(table(INV$location))
 
@@ -120,7 +120,7 @@ All inventories matching with lidar (```r np0```plots/tansects in ```r nl0``` lo
 
 - ```r npdead``` plots which had more than half of the trees dead and less than 10 individuals.
 
-- ```r sum(niddbh)``` dead individuals were removed.  *(I may add them later into biomass estimations, ```r niddbh[2]``` (```r round(niddbh[2]/sum(niddbh)*100,0)```%) dead trees have DBH measurements)*.
+- ```r sum(niddbh)``` dead individuals were removed.  *(I may add them later into biomass estimations, ```r niddbh[2]``` dead trees (```r round(niddbh[2]/sum(niddbh)*100,0)```%) have DBH measurements)*.  *NOTE: MarVin dead trees are...*
 
 - ```r niL``` lianas.
 
@@ -147,7 +147,7 @@ table(paste(db.parcela$owner,db.parcela$location),db.parcela$sizeplot)
 
 ## Map of inventory and lidar boundaries
 
-The following map shows plot locations and lidar transects available for the analysis: *(NOTE: this is an outdated map. MarVin are not yet included)*
+The following map shows plot locations and lidar transects available for the analysis: *(NOTE: this is an outdated map. MarVin plots are not included)*
 
 
 

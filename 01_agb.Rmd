@@ -18,38 +18,25 @@ text-align: justify}
 In order to calculate Above-ground biomass (AGB) from field inventories, allometric ecuations are used. In this case, we applied Chave et al. (2014) Eq. 4:
 
 $$AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}$$
-which relates AGB with Wood Density ($WD$), stem Diameter ($D$ or $DBH$) and Height ($H$) of each tree.
+which relates AGB with [Wood Density](#wood-density) ($WD$), stem [Diameter](#dbh) ($D$ *aka* $DBH$) and [Height](#height) ($H$) of each tree.
 
 <br>
 
 ```{r echo=F, results='hide'}
-INV <- read.csv('/Volumes/imox-SSD/Rproj_carbon 2021-05-29/data/inventories/plots_clean/all_inventories_v2_filtered.csv')
-db.parcela <- read.csv('/Volumes/imox-SSD/Rproj_carbon 2021-05-29/data/inventories/plots_clean/db_parcela_v0.csv')
+INV <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/all_inventories_v3_wd_clean.csv')
+db.parcela <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v1_wd_clean.csv')
 ```
 
 # Wood Density
 
-Wood Density (WD or ρ) was acquired from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the ```BIOMASS``` package in R.
+Wood Density (WD) was acquired from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the ```BIOMASS``` package in R.
 
 When WD for a species was not found, the mean WD of the genus was allocated. If an individual was not identified to genus, then the mean of the WD of the plot was selected.
 
 
 ```{r echo=F, message=FALSE}
-## Get wood density -----
-require(BIOMASS)
-x <- dataWD <- getWoodDensity(
-  genus = INV$genus.tnrs,
-  species = INV$epit.tnrs,
-  stand = INV$parcela
-)
-INV <- cbind(INV,x[c('meanWD','sdWD','levelWD')])
-WD_level <- INV$levelWD
-WD_level[!WD_level%in%c('species','genus')] <- 'plot'
-
-
-table(INV$owner,WD_level)[,c(3,1,2)]
-table(WD_level)[c(3,1,2)]
-
+table(INV$owner,INV$WD_level2)[,c(3,1,2)]
+table(INV$WD_level2)[c(3,1,2)]
 
 ```
 
@@ -65,33 +52,77 @@ Plots from Paisagens Sustentáveis have different DBH threshold in their plots. 
 ![*Sub-plot examples in some Paisagens Sustentáveis plots.*](images/01_example_sampling_design.png)
 
 </center>
-
+<br>
 
 ```{r, echo=F}
 
-#Add table of min DBH in plots (excel)
+message('Minimum DBH in plot and sub-plot (Paisagens Sustentáveis)')
+z <- read.csv('~/Rproj/07_carbon_br/data/inventories/Paisagem sustentais/plot_subplot_DBH.csv')
+z[z$minDBH.plot==z$minDBH.subplot,c('minDBH.subplot','area.subplot')] <- NA
+z
 
 ```
 
+<br>
 
-Minimum DBH threshold is consisteng in Paisagens Sustentáveis where few DBHs are below 10 cm, therefore I considered them typing errors. I thought of giving them the mean DBH value for the species but I ended up excluding them for the moment.
+Min and Max DBH in data (by location):
+```{r echo=F}
+tmp <- do.call(rbind,tapply(INV$DBH, paste(INV$owner,INV$location,INV$year,INV$sizeplot), range))
+colnames(tmp) <- c('Min','Max')
+tmp
+```
 
-Data in MarVin is not fully consistent and minimum DBH threshold seem to go from 5cm, but not all plots. *I need to get proper metadata from him.* Also, there are few points below 5cm which I consider they are typos.
+<br>
+
+There are few DBHs below 10 cm in PaiSus which I consider them as typing errors. I thought I could assign the mean DBH value of the species but I ended up not changing anything for the moment.
+
+Minimum DBH in MarVin data is not fully consistent. Also, there are few points below 5cm which I guess are typos. Many plots seem to start from 10 cm, and some others from 5 cm? See below...    *NOTE: I need to get proper metadata from him.*
 
 ```{r echo=F}
-#Add a table with DBH cut() and owner
 message('Individuals by DBH class and project')
 table(INV$owner,cut(INV$DBH, breaks = c(0,5,10,35,Inf), right = F))
 
 ```
 
-Now, to make projects comparable for the moment, all trees DBH < 10cm were excluded (```r nrow(cars)``` ind), but this will probably change to a minimum of 5cm DBH in the future, using expansion factors for AGB in plots with no individuals below 10cm. This because it will be a problem *e.g.* when comparing our data with Asner & Mascaro (201X)'s which go from 5cm.
+<br>
 
-This is the distribution of DBH in our data (*i.e.*, DBH<10cm):
+This is the distribution of DBH in our data:
 
-```{r echo=F}
-INV <- INV[INV$DBH>=10,]
-hist(INV$DBH, breaks = 50, main = 'Histogram of DBH')
+## {.tabset}
+```{r results='asis',echo=F}
+cat('###','All inventories',' \n')
+dAll <- hist(INV$DBH, breaks = 5*0:round(max(INV$DBH)/5), plot = F)
+dPS <- hist(INV$DBH[INV$owner=='PaiSus'], breaks = 5*0:round(max(INV$DBH)/5), plot = F)
+dAC <- hist(INV$DBH[INV$owner=='MarVin'], breaks = 5*0:round(max(INV$DBH)/5), plot = F)
+
+x <- barplot(rbind(dPS$counts,dAC$counts), col=c('gold2','cyan3'), ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Diameter at Breast Height (DBH)', ylab='Frequency', main= 'All')
+psxi <- x[1]-mean(diff(x))/2
+psxs <- (1:50*mean(diff(x)))
+axis(1,c(psxi,psxi+psxs[1:5*10]),pretty(INV$DBH))
+abline(v=psxi+psxs[c(10,35)/5], col='red', lty=2)
+text(psxi+psxs[c(10,35)/5],max(dAll$counts)*1.07, labels=c('10 cm','35 cm'), cex=.7, adj=0, col='grey50')
+legend('topright', legend = c('PaiSus','MarVin'), fill = c('gold2','cyan3'), bty='n', border = NA)
+cat(' \n \n')
+
+cat('###','PaiSus',' \n')
+barplot(dPS$counts, col='gold2', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Diameter at Breast Height (DBH)', ylab='Frequency', main= 'PaiSus')
+axis(1,c(psxi,psxi+psxs[1:5*10]),pretty(INV$DBH))
+abline(v=psxi+psxs[c(10,35)/5], col='red', lty=2)
+text(psxi+psxs[c(10,35)/5],max(dAll$counts)*1.07, labels=c('10 cm','35 cm'), cex=.7, adj=0, col='grey50')
+cat(' \n \n')
+
+cat('###','MarVin',' \n')
+barplot(dAC$counts, col='cyan3', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Diameter at Breast Height (DBH)', ylab='Frequency', main= 'MarVin')
+axis(1,c(psxi,psxi+psxs[1:5*10]),pretty(INV$DBH))
+abline(v=psxi+psxs[c(10,35)/5], col='red', lty=2)
+text(psxi+psxs[c(10,35)/5],max(dAll$counts)*1.07, labels=c('10 cm','35 cm'), cex=.7, adj=0, col='grey50')
+
 ```
 
 <br>
@@ -99,9 +130,8 @@ hist(INV$DBH, breaks = 50, main = 'Histogram of DBH')
 # Height
 
 ```{r echo=F}
-INV$height[INV$height<=0] <- NA
 
-Hbyow <- table(INV$owner,is.na(INV$height), useNA = 'ifany')[,2:1]
+Hbyow <- table(INV$owner,!is.na(INV$height), useNA = 'ifany')[,2:1]
 Hbytp  <- table(INV$tree.type)
 Hbytp0 <- table(INV$tree.type[!is.na(INV$height)])
 Hbytp1 <- table(INV$tree.type[is.na(INV$height)])
@@ -110,42 +140,35 @@ Hbytp1 <- table(INV$tree.type[is.na(INV$height)])
 Height values are few among inventories (```r nrow(INV[!is.na(INV$height),])``` out of ```r nrow(INV[is.na(INV$height),])```). Only PaiSus has height values, whereas MarVin has none.
 
 ```{r echo=F}
+message('Individuals with height data by project owners')
 Hbyow
+
+message('Individuals with height data by locations')
+table(paste(INV$owner,INV$location),!is.na(INV$height))[,2:1]
+
 ```
 
 <br>
 
-## Local Height-Diameter Models
+## Diameter-Height Models
 
-I estimated height of the trees from DBH measurements by constructing local height models. The relationship between DBH and height are different for trees and palms, so I each group had its own local height model. There were ~30 crazy height-DBH relations (outliers) which I did not account for when building the models. *e.g.*, height = 48.2m when DBH = 12.7 cm.
-
-```{r echo=F, results=F}
-cnd <- INV$height>=33.6 & INV$DBH<=33 | INV$height<=2 | INV$height<=30 & INV$DBH>=120 | INV$height<=11 & INV$DBH>=51 | INV$height<=8 & INV$DBH>=28
-cnd[is.na(cnd)] <- FALSE
-
-plot(INV[INV$tree.type=='O',c('DBH','height')], col = densCols(INV[INV$tree.type=='O',c('DBH','height')]), pch = 20, xlim=c(0,250), ylim=c(0,60))
-points( INV[cnd & INV$tree.type=='O', c('DBH','height')], pch = 18)
-INV$height[cnd] <- NA
-```
-
-Models were generated using data from ```r Hbytp0[1]``` trees and ```r Hbytp0[2]``` palms.
-Then I predicted the height of ```r Hbytp1``` trees (```r round(Hbytp1[1]/Hbytp[1], digits=1)```%) and ```r Hbytp1[2]``` palm  (```r 00 #round(Hbytp1[2]/Hbytp[2], digits=1)```%).
+I estimated tree height from DBH measurements by fitting DBH-Height (D-H) models . The relationship between DBH and height is different for trees and palms, so each had its own D-H model (*TODO: add palm ref.*). There were ~30 crazy D-H data pairs (outliers) which I excluded when building the models (*e.g.*, height = 48.2 m when DBH = 12.7 cm).
 
 ```{r echo=F}
-message('Individuals with height in locations')
-table(paste(INV$owner,INV$location),!is.na(INV$height))[,2:1]
 
-
-
-
-plot(INV[INV$tree.type=='O',c('DBH','height')], col = densCols(INV[INV$tree.type=='O',c('DBH','height')]), pch = 20, xlim=c(0,250), ylim=c(0,60))
+plot(INV[INV$tree.type=='O',c('DBH','height')], col = densCols(INV[INV$tree.type=='O',c('DBH','height')]), pch = 20, xlim=c(0,200), ylim=c(0,60), xlab='DBH (cm)', ylab='Height (m)')
 points(INV[INV$tree.type=='P',c('DBH','height')], pch = 20,
        col = densCols(INV[INV$tree.type=='P',c('DBH','height')],
                       colramp = colorRampPalette(c('lightpink','red'))))
+legend('bottomright',legend = c('Trees','Palms'), col = c("#4292C6","#FF6D73"), pch=16)
+
 ```
 
+Models were fitted using data from ```r Hbytp0[1]``` trees and ```r Hbytp0[2]``` palms.
+Then, I predicted height for ```r Hbytp1[1]``` trees and ```r Hbytp1[2]``` palms.
 
-Models were constructed using the `BIOMASS` package in R. We used 4 height-diameter modelling approaches:
+
+Four models were fitted using the `BIOMASS` package in R:
 
 |method|equation| 
 |---|---|
@@ -155,26 +178,135 @@ Models were constructed using the `BIOMASS` package in R. We used 4 height-diame
 |michaelis|$H = (A * D)/(B + D)$|
 |
 
-Best model for trees and palms according to the RSE and the AIC value was *log2*.
 
+```{r echo=F, message=FALSE}
+require(BIOMASS)
+
+# trees ----
+icond <- !is.na(INV$height) & INV$tree.type=='O'
+i <- INV[icond,] # Only height for training the model
+
+hcond <- is.na(INV$height) & INV$tree.type=='O'
+h <- INV[hcond,] # No height needing prediction
+
+# palms ----
+jcond <- !is.na(INV$height) & INV$tree.type=='P'
+j <- INV[jcond,] # Only height for training the model
+
+kcond <- is.na(INV$height) & INV$tree.type=='P'
+k <- INV[kcond,] # No height needing prediction
+
+```
+
+## Model comparison {.tabset}
+
+Best model for trees and palms according to the RSE (and AIC) value was *log2* :
 
 ### Trees
-```{r}
-#Add Mtree and Mpalm with plots
+```{r echo=FALSE, message=FALSE}
+(Mtree <- modelHD(
+  D = i$DBH, H = i$height,
+  drawGraph = TRUE, useWeight = TRUE
+))
 ```
 
 
 ### Palms
 
-```{r}
-#Add Mtree and Mpalm with plots
+```{r echo=FALSE, message=FALSE}
+(Mpalm <- modelHD(
+  D = j$DBH, H = j$height,
+  drawGraph = TRUE, useWeight = TRUE
+))
 ```
 
 
-# AGB estimation
-The formula was....
+<br><br>
 
+
+# AGB estimation
+In this case, we applied Chave et al. (2014) Eq. 4 to estimate AGB for each tree:
+
+$$AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}$$
+
+## Individual AGB by different height estimations
+
+AGB_tree was calculated using heights predicted by the 4 D-H methods
+
+```{r echo=F, results='hide'}
+INV <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/all_inventories_v5_agb.csv')
+# db.parcela <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v1_wd_clean.csv')
+```
+
+<br>
+
+### figures for each height estimation method {.tabset}
+
+Each with loess smooth line...
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE} 
+nnAGB <- sort(grep('AGB',names(INV), value=T))
+maxAGB <- max(INV[,nnAGB])
+for(i in 1:length(nnAGB)) {
+  cat('####',nnAGB[i],'\n')
+  plot(INV$DBH, INV[,nnAGB[i]], cex=.7, pch = 20, col = densCols(INV$DBH,INV[,nnAGB[i]]),
+       xlim = range(INV$DBH), ylim=c(0,maxAGB), 
+       main = nnAGB[i], ylab = 'AGB')
+  lines(loess.smooth(INV$DBH[INV$DBH>=35], INV[INV$DBH>=35,nnAGB[i]],family = 'gaussian'))
+  abline(v=c(10,35), lty=2)
+  cat(' \n \n')
+}
+
+
+```
+
+
+### loess compare
+
+*Add the plot of loess lines...*
+
+```{r echo=FALSE}
+col.range <- sf::sf.colors(length(nnAGB),categorical = T)
+par(mfrow=c(1,1))
+plot(0, xlim = range(INV$DBH), ylim=c(0,maxAGB), 
+     main = 'AGB compare\n(loess)', xlab='DBH', ylab= 'AGB',col = NA)
+for(i in 1:length(nnAGB)) lines(loess.smooth(INV$DBH, INV[,nnAGB[i]], family = 'gaussian'),
+                                col = col.range[i], lwd=2)
+abline(v=c(10,35), lty=2)
+legend('top', legend = nnAGB, col = col.range, lwd = 2, bty = 'n')
+```
+
+
+
+
+
+
+## AGB by plot and AGBD
+
+AGBp is the sum of AGB of all individual in the plot
+
+AGBD is AGBp divided by area: [MgC/ha]. Here we have some decisions to make: which area? I have the teorical area and the area from shapefiles. *add 1:1 plot of both*
+
+ACD is AGBD multiplied by .48 (*NOTE: add ref*) which is the carbon content.
+
+<br>
+
+## Some figures relating AGBD with something...
+
+*Add some other descriptive figures & tables.*
+
+<br>
 
 
 # Error propagation
-Markov chains...
+
+```{r eval=FALSE}
+# Per plot using the local HD model constructed above (modelHD)
+resultMC.t <- AGBmonteCarlo(
+  D = INV$DBH[INV$tree.type=='O'], WD = INV$meanWD[INV$tree.type=='O'], errWD = INV$sdWD[INV$tree.type=='O'],
+  HDmodel = HDmodel2.t, Dpropag = "chave2004"
+)
+resMC <- summaryByPlot(resultMC.t$AGB_simu, INV$plotID[INV$tree.type=='O'])
+head(resMC)
+```
+

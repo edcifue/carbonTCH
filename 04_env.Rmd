@@ -1,5 +1,5 @@
 ---
-title: "Basal Area & Wood Density"
+title: "Environmental Variables"
 date: "Last update 11/05/2021"
 output: 
       html_document:
@@ -14,13 +14,13 @@ text-align: justify}
 
 <br>
 
-# Basal Area (plot)
+This section is to add everithing related to the extraction of environmental variables for each plot.
+
+# Eric & Cristiano's many layers
 
 <br><br><br><br><br><br><br>
 
 
-# Wood Density (plot)
 
-...
 
 

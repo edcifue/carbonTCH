@@ -13,6 +13,7 @@
 
 <title>Estimating carbon from lidar</title>
 
+<script src="site_libs/header-attrs-2.6/header-attrs.js"></script>
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -370,7 +371,10 @@ div.tocify {
   <a href="03_ba.html">BA &amp; ρ</a>
 </li>
 <li>
-  <a href="04_models.html">Modelling</a>
+  <a href="04_env.html">Environ. Variables</a>
+</li>
+<li>
+  <a href="05_models.html">Modelling</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -398,32 +402,32 @@ text-align: justify}
 <p>Hi! I created this website to keep you updated with the project! First, I’ll give an overview of what we want to do and then the different processes and analysis I have done so far. Main tabs of this website explain further how I processed data for each of the elements of the model (<em>i.e.</em>, AGB, TCH, BA &amp; ρ) as well as the modelling process.</p>
 <p><br></p>
 <div id="project-overview" class="section level1">
-<h1><span class="header-section-number">1</span> Project overview</h1>
+<h1>Project overview</h1>
 <p>The main goal is to generate equations to estimate aboveground biomass/carbon (AGB/ACD) from lidar. We want to better understand variation in Wood Density (ρ) and Basal Area (BA) to improve the Top-of-the-Canopy Height (TCH) - Biomass relationships. The aim is to generate the following model:</p>
 <p><span class="math display">\[
 ACD_{plot} = a · TCH^d · BA^c · ρ^b
 \]</span></p>
-<p>ACD will be calculated using field plot data by summing above-ground biomass (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin &amp; Thomas, 2011).</p>
-<p>LiDAR data will be used to calculate TCH, while BA and ρ are derived from field plot data. This modelling approach will provide a better understanding on how BA and ρ affect ACD.</p>
+<p>ACD will be calculated using field plot data by summing <a href="01_agb.html">above-ground biomass</a> (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin &amp; Thomas, 2011).</p>
+<p>LiDAR data will be used to <a href="02_tch.html">calculate TCH</a>, while <a href="03_ba.html#wood-density-(plot)">BA</a> and <a href="03_ba.html#basal-area-(plot)">ρ (<em>aka</em> WD)</a> are derived from field plot data. Our aim is to provide a better understanding on how BA and ρ affect ACD-TCH relationships to improve carbon estimations.</p>
 <p><br></p>
 </div>
 <div id="data" class="section level1">
-<h1><span class="header-section-number">2</span> Data</h1>
+<h1>Data</h1>
 <div id="data-collection" class="section level2">
-<h2><span class="header-section-number">2.1</span> Data collection</h2>
-<p>While other datasets are yet to come, I am working with forest inventories plus matching lidar from <strong>Paisagens Sustentáveis</strong> (<code>PaiSus</code>) and <strong>Marcus Vinicio Neves d’Oliveira</strong> (<code>MarVin</code>) in Brazil.</p>
+<h2>Data collection</h2>
+<p>While other datasets are yet to come, I am working with forest inventories plus matching lidar from Paisagens Sustentáveis (<strong>PaiSus</strong>) and Marcus Vinicio Neves d’Oliveira (<strong>MarVin</strong>) in Brazil.</p>
 <p>Other colaborators.. Jean and Eric… EBA project, etc.</p>
 <p><br></p>
 </div>
 <div id="cleaning-inventory-data" class="section level2">
-<h2><span class="header-section-number">2.2</span> Cleaning inventory data</h2>
+<h2>Cleaning inventory data</h2>
 <p>Inventory datasets were compiled and standardised from collaborators shown above. Taxonomic errors were corrected using the Taxonomic Name Resolution Service v5.0 (<a href="https://tnrs.biendata.org/" class="uri">https://tnrs.biendata.org/</a>).</p>
 <p>All inventories matching with lidar (<code>743</code>plots/tansects in <code>26</code> locations) were selected, but some data were excluded in the following sequence:</p>
 <ul>
 <li><p><code>112</code> inventory transects (<em>i.e.</em>, 500 meter transects in Paisagen Sustentáveis).</p></li>
 <li><p><code>177</code> re-sampled plots. I selected most recent (not always) with the least time difference from its lidar survey.</p></li>
 <li><p><code>8</code> plots which had more than half of the trees dead and less than 10 individuals.</p></li>
-<li><p><code>3590</code> dead individuals were removed. <em>(I may add them later into biomass estimations, <code>3377</code> (<code>94</code>%) dead trees have DBH measurements)</em>.</p></li>
+<li><p><code>3590</code> dead individuals were removed. <em>(I may add them later into biomass estimations, <code>3377</code> dead trees (<code>94</code>%) have DBH measurements)</em>. <em>NOTE: MarVin dead trees are…</em></p></li>
 <li><p><code>122</code> lianas.</p></li>
 <li><p><code>19</code> trees without DBH measurement.</p></li>
 </ul>
@@ -469,8 +473,8 @@ ACD_{plot} = a · TCH^d · BA^c · ρ^b
 <p><br></p>
 </div>
 <div id="map-of-inventory-and-lidar-boundaries" class="section level2">
-<h2><span class="header-section-number">2.3</span> Map of inventory and lidar boundaries</h2>
-<p>The following map shows plot locations and lidar transects available for the analysis: <em>(NOTE: this is an outdated map. MarVin are not yet included)</em></p>
+<h2>Map of inventory and lidar boundaries</h2>
+<p>The following map shows plot locations and lidar transects available for the analysis: <em>(NOTE: this is an outdated map. MarVin plots are not included)</em></p>
 <iframe src="https://www.google.com/maps/d/u/0/embed?mid=1B8fDAx8gQiWn6hD3BzQkBcjWoqBajU1E" width="640" height="480"></iframe>
 </div>
 </div>

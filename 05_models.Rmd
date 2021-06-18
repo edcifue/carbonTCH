@@ -44,7 +44,81 @@ $$e ~ N(0,sigma + sigma1·TCH)$$
 <br>
 
 
-# David/Sacha MLE code
+
+# Edgar's first attempt
+
+I have some questions: 
+- how to define the error structure? 
+- What is the proper way to assign "priors"?
+- Which other MLE methods are appropriate?
+- etc...
+
+```{r eval=FALSE}
+# load libraries
+library(bbmle)
+
+#functions
+RMSE<-function(Obs,Pred){
+  sqrt(mean((Obs-Pred)^2) ) / mean(Obs) *100 }
+bias<-function(Obs,Pred){
+  mean(Pred-Obs)/mean(Obs)*100 }
+R2 <-function(Obs,Pred){ 1 - sum((Obs-Pred)^2) / sum((Obs-mean(Obs))^2) }
+
+XXX <- read.csv('~/Rproj/07_carbon_br/data/to_model/20210420_db_model_v1.csv')
+XXX$ACD.y <- XXX$totalbiomas.wplog2.area*10000*.47
+
+
+Y <- XXX[, c("ACD.y", "TCHmean")]
+names(Y)
+
+# quick look at correlations
+
+summary(lm(log(ACD.y) ~ log(TCHmean), data = Y))
+summary(lm(ACD.y ~ TCHmean, data = Y))
+
+plot(Y$ACD.y ~ Y$TCHmean)
+
+
+#################################
+## model of TCH influence on AGB
+
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b,sigma) {
+    with(Y[-i,],
+         {
+           R = ACD.y - a*TCHmean^b
+           R = suppressWarnings(dnorm(R, 0, sigma, log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma =.1), method = "L-BFGS-B",
+               lower = c(-Inf, -Inf, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf))
+  Coeffs$obs[i] = Y$ACD.y[i]
+  Coeffs$pred[i] = Y$TCHmean[i]*fit1@coef[1]^fit1@coef[2]
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+}
+
+summary(fit1)
+plot(Coeffs$obs, Coeffs$pred)
+abline(a=1, b=0)
+RMSE(Coeffs$obs, Coeffs$pred)
+bias(Coeffs$obs, Coeffs$pred)
+R2(Coeffs$obs, Coeffs$pred)
+
+
+```
+
+<br>
+
+# David/Sacha MLE reference code
 
 Here is the code for maximum likelihood estimation from David/Sacha:
 
@@ -125,3 +199,5 @@ for (i in 1:nrow(Y)) {
 summary(fit1)
 
 ```
+
+

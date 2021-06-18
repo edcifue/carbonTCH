@@ -11,11 +11,13 @@ navbar:
       href: 02_tch.html
     - text: "BA & ρ"
       href: 03_ba.html
+    - text: "Environ. Variables"
+      href: 04_env.html
     - text: "Modelling"
-      href: 04_models.html
+      href: 05_models.html
 #output: word_document
 output:
   html_document:
     theme: cosmo
     highlight: textmate
-    number_sections: TRUE
+    number_sections: FALSE

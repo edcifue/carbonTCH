@@ -13,6 +13,7 @@
 
 <title>Above-Ground Biomass (AGB)</title>
 
+<script src="site_libs/header-attrs-2.6/header-attrs.js"></script>
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -370,7 +371,10 @@ div.tocify {
   <a href="03_ba.html">BA &amp; ρ</a>
 </li>
 <li>
-  <a href="04_models.html">Modelling</a>
+  <a href="04_env.html">Environ. Variables</a>
+</li>
+<li>
+  <a href="05_models.html">Modelling</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -396,87 +400,148 @@ text-align: justify}
 </style>
 <p><br></p>
 <div id="background" class="section level1">
-<h1><span class="header-section-number">1</span> Background</h1>
-<p>In order to calculate Above-ground biomass (AGB) from field inventories, allometric ecuations are used. In this case, we applied Chave et al. (2014) Eq. 4:</p>
-<p><span class="math display">\[AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}\]</span> which relates AGB with Wood Density (<span class="math inline">\(WD\)</span>), stem Diameter (<span class="math inline">\(D\)</span> or <span class="math inline">\(DBH\)</span>) and Height (<span class="math inline">\(H\)</span>) of each tree.</p>
+<h1>Background</h1>
+<p>In order to calculate Above-ground biomass (AGB) from field inventories, allometric ecuations are used. In this case, we applied Chave et al. (2014) Eq. 4:</p>
+<p><span class="math display">\[AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}\]</span> which relates AGB with <a href="#wood-density">Wood Density</a> (<span class="math inline">\(WD\)</span>), stem <a href="#dbh">Diameter</a> (<span class="math inline">\(D\)</span> <em>aka</em> <span class="math inline">\(DBH\)</span>) and <a href="#height">Height</a> (<span class="math inline">\(H\)</span>) of each tree.</p>
 <p><br></p>
 </div>
 <div id="wood-density" class="section level1">
-<h1><span class="header-section-number">2</span> Wood Density</h1>
-<p>Wood Density (WD or ρ) was acquired from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the <code>BIOMASS</code> package in R.</p>
+<h1>Wood Density</h1>
+<p>Wood Density (WD) was acquired from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the <code>BIOMASS</code> package in R.</p>
 <p>When WD for a species was not found, the mean WD of the genus was allocated. If an individual was not identified to genus, then the mean of the WD of the plot was selected.</p>
-<pre><code>##         WD_level
+<pre><code>##         
 ##          species genus  plot
 ##   MarVin   20582 19552  9757
 ##   PaiSus   11702  2654   792</code></pre>
-<pre><code>## WD_level
+<pre><code>## 
 ## species   genus    plot 
 ##   32284   22206   10549</code></pre>
 <p><br></p>
 </div>
 <div id="dbh" class="section level1">
-<h1><span class="header-section-number">3</span> DBH</h1>
+<h1>DBH</h1>
 <p>Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees &gt;35cm DBH in the whole plot area and &gt;10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m subplot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.</p>
 <center>
 <div class="figure">
-<img src="images/01_example_sampling_design.png" alt="Sub-plot examples in some Paisagens Sustentáveis plots." />
+<img src="images/01_example_sampling_design.png" alt="" />
 <p class="caption"><em>Sub-plot examples in some Paisagens Sustentáveis plots.</em></p>
 </div>
 </center>
-<p>Minimum DBH threshold is consisteng in Paisagens Sustentáveis where few DBHs are below 10 cm, therefore I considered them typing errors. I thought of giving them the mean DBH value for the species but I ended up excluding them for the moment.</p>
-<p>Data in MarVin is not fully consistent and minimum DBH threshold seem to go from 5cm, but not all plots. <em>I need to get proper metadata from him.</em> Also, there are few points below 5cm which I consider they are typos.</p>
+<p><br></p>
+<pre><code>## Minimum DBH in plot and sub-plot (Paisagens Sustentáveis)</code></pre>
+<pre><code>##     owner location year sizeplot minDBH.plot minDBH.subplot area.subplot
+## 1  PaiSus  ANA_A01 2015    50x50          10             NA         &lt;NA&gt;
+## 2  PaiSus  AND_A01 2013    50x50          35             10         5x50
+## 3  PaiSus  BON_A01 2014    50x50          35             10        10x50
+## 4  PaiSus  CAU_A01 2018    50x50          35             10        20x50
+## 5  PaiSus  DUC_A01 2016    50x50          35             10        20x50
+## 6  PaiSus   FN_A01 2015    50x50          35             10         5x50
+## 7  PaiSus  HUM_A01 2014    50x50          35             10        10x50
+## 8  PaiSus  JAM_A02 2013    50x50          35             10         5x50
+## 9  PaiSus  JAM_A03 2013    50x50          35             10         5x50
+## 10 PaiSus  PAR_A01 2018    50x50          35             10        20x50
+## 11 PaiSus  SAN_A01 2014    50x50          35             10         5x50
+## 12 PaiSus  SAN_A02 2014    50x50          35             10         5x50
+## 13 PaiSus  SFX_A01 2011    40x40          10             NA         &lt;NA&gt;
+## 14 PaiSus  TAL_A01 2014    50x50          35             10        10x50
+## 15 PaiSus  TAP_A01 2015    50x50          10             NA         &lt;NA&gt;
+## 16 PaiSus  TAP_A03 2015    50x50          10             NA         &lt;NA&gt;</code></pre>
+<p><br></p>
+<p>Min and Max DBH in data (by location):</p>
+<pre><code>##                                   Min      Max
+## MarVin EMB_A01 2016 100x100  0.600000 195.5000
+## MarVin FEA_A01 2013 50x50    0.100000 163.9000
+## MarVin FEA_A02 2015 100x100  9.000000 230.1000
+## MarVin FEG_A01 2017 100x100  9.900000 201.9000
+## MarVin FEL_A01 2018 100x100  9.800000 163.9000
+## MarVin FEM_A01 2017 100x100  9.900000 197.4000
+## MarVin SFI_A01 2017 100x100  9.900000 205.3000
+## MarVin TKX_A01 2016 100x100  1.336902 170.2958
+## PaiSus ANA_A01 2015 50x50   10.000000 142.8000
+## PaiSus AND_A01 2013 50x50   10.100000 142.0000
+## PaiSus BON_A01 2014 50x50   10.000000 180.0000
+## PaiSus CAU_A01 2018 50x50   10.000000 190.0000
+## PaiSus DUC_A01 2016 50x50    1.700000  98.8000
+## PaiSus FN_A01 2015 50x50    10.000000 117.7000
+## PaiSus HUM_A01 2014 50x50   10.100000 135.0000
+## PaiSus JAM_A02 2013 50x50   10.000000 140.0000
+## PaiSus JAM_A03 2013 50x50   10.500000 106.2000
+## PaiSus PAR_A01 2018 50x50    4.000000 121.0000
+## PaiSus SAN_A01 2014 50x50   10.000000 130.2000
+## PaiSus SAN_A02 2014 50x50   10.800000  90.0000
+## PaiSus SFX_A01 2011 40x40   10.000000 130.0000
+## PaiSus TAL_A01 2014 50x50   10.200000 132.0000
+## PaiSus TAP_A01 2015 50x50   10.000000 145.0000
+## PaiSus TAP_A03 2015 50x50    9.400000 234.0000</code></pre>
+<p><br></p>
+<p>There are few DBHs below 10 cm in PaiSus which I consider them as typing errors. I thought I could assign the mean DBH value of the species but I ended up not changing anything for the moment.</p>
+<p>Minimum DBH in MarVin data is not fully consistent. Also, there are few points below 5cm which I guess are typos. Many plots seem to start from 10 cm, and some others from 5 cm? See below… <em>NOTE: I need to get proper metadata from him.</em></p>
 <pre><code>## Individuals by DBH class and project</code></pre>
 <pre><code>##         
 ##          [0,5) [5,10) [10,35) [35,Inf)
 ##   MarVin    19    914   43058     5900
 ##   PaiSus     3      1   11777     3367</code></pre>
-<p>Now, to make projects comparable for the moment, all trees DBH &lt; 10cm were excluded (<code>50</code> ind), but this will probably change to a minimum of 5cm DBH in the future, using expansion factors for AGB in plots with no individuals below 10cm. This because it will be a problem <em>e.g.</em> when comparing our data with Asner &amp; Mascaro (201X)’s which go from 5cm.</p>
-<p>This is the distribution of DBH in our data (<em>i.e.</em>, DBH&lt;10cm):</p>
-<p><img src="01_agb_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><br></p>
+<p>This is the distribution of DBH in our data:</p>
+<div id="section" class="section level2 tabset">
+<h2 class="tabset"></h2>
+<div id="all-inventories" class="section level3">
+<h3>All inventories</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
+<div id="paisus" class="section level3">
+<h3>PaiSus</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-6-2.png" width="672" /></p>
+</div>
+<div id="marvin" class="section level3">
+<h3>MarVin</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-6-3.png" width="672" /></p>
 <p><br></p>
 </div>
+</div>
+</div>
 <div id="height" class="section level1">
-<h1><span class="header-section-number">4</span> Height</h1>
-<p>Height values are few among inventories (<code>3173</code> out of <code>60929</code>). Only PaiSus has height values, whereas MarVin has none.</p>
+<h1>Height</h1>
+<p>Height values are few among inventories (<code>3147</code> out of <code>61892</code>). Only PaiSus has height values, whereas MarVin has none.</p>
+<pre><code>## Individuals with height data by project owners</code></pre>
 <pre><code>##         
 ##           TRUE FALSE
-##   MarVin 48958     0
-##   PaiSus 11971  3173</code></pre>
-<p><br></p>
-<div id="local-height-diameter-models" class="section level2">
-<h2><span class="header-section-number">4.1</span> Local Height-Diameter Models</h2>
-<p>I estimated height of the trees from DBH measurements by constructing local height models. The relationship between DBH and height are different for trees and palms, so I each group had its own local height model. There were ~30 crazy height-DBH relations (outliers) which I did not account for when building the models. <em>e.g.</em>, height = 48.2m when DBH = 12.7 cm.</p>
-<p><img src="01_agb_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-<p>Models were generated using data from <code>3050</code> trees and <code>123</code> palms. Then I predicted the height of <code>55431, 5498</code> trees (<code>0.9</code>%) and <code>5498</code> palm (<code>0</code>%).</p>
-<pre><code>## Individuals with height in locations</code></pre>
+##   MarVin     0 49891
+##   PaiSus  3147 12001</code></pre>
+<pre><code>## Individuals with height data by locations</code></pre>
 <pre><code>##                 
 ##                   TRUE FALSE
-##   MarVin EMB_A01     0  1826
-##   MarVin FEA_A01     0  6252
-##   MarVin FEA_A02     0  3376
-##   MarVin FEG_A01     0 10216
-##   MarVin FEL_A01     0  7838
-##   MarVin FEM_A01     0  7994
-##   MarVin SFI_A01     0  7336
-##   MarVin TKX_A01     0  4120
+##   MarVin EMB_A01     0  2185
+##   MarVin FEA_A01     0  6358
+##   MarVin FEA_A02     0  3407
+##   MarVin FEG_A01     0 10220
+##   MarVin FEL_A01     0  7864
+##   MarVin FEM_A01     0  7995
+##   MarVin SFI_A01     0  7657
+##   MarVin TKX_A01     0  4205
 ##   PaiSus ANA_A01   240  3372
 ##   PaiSus AND_A01   337     3
 ##   PaiSus BON_A01   253     0
 ##   PaiSus CAU_A01     0  4154
-##   PaiSus DUC_A01     0  1077
+##   PaiSus DUC_A01     0  1079
 ##   PaiSus FN_A01    545     3
 ##   PaiSus HUM_A01   241     0
 ##   PaiSus JAM_A02     0   368
 ##   PaiSus JAM_A03     0    91
-##   PaiSus PAR_A01   199  1207
+##   PaiSus PAR_A01   199  1208
 ##   PaiSus SAN_A01   162     1
-##   PaiSus SAN_A02   150     4
+##   PaiSus SAN_A02   154     0
 ##   PaiSus SFX_A01    86   497
 ##   PaiSus TAL_A01   119     1
 ##   PaiSus TAP_A01   248   821
-##   PaiSus TAP_A03   560   405</code></pre>
+##   PaiSus TAP_A03   563   403</code></pre>
+<p><br></p>
+<div id="diameter-height-models" class="section level2">
+<h2>Diameter-Height Models</h2>
+<p>I estimated tree height from DBH measurements by fitting DBH-Height (D-H) models . The relationship between DBH and height is different for trees and palms, so each had its own D-H model (<em>TODO: add palm ref.</em>). There were ~30 crazy D-H data pairs (outliers) which I excluded when building the models (<em>e.g.</em>, height = 48.2 m when DBH = 12.7 cm).</p>
 <p><img src="01_agb_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
-<p>Models were constructed using the <code>BIOMASS</code> package in R. We used 4 height-diameter modelling approaches:</p>
+<p>Models were fitted using data from <code>3024</code> trees and <code>123</code> palms. Then, I predicted height for <code>56374</code> trees and <code>5518</code> palms.</p>
+<p>Four models were fitted using the <code>BIOMASS</code> package in R:</p>
 <table>
 <thead>
 <tr class="header">
@@ -507,24 +572,87 @@ text-align: justify}
 </tr>
 </tbody>
 </table>
-<p>Best model for trees and palms according to the RSE and the AIC value was <em>log2</em>.</p>
+</div>
+<div id="model-comparison" class="section level2 tabset">
+<h2 class="tabset">Model comparison</h2>
+<p>Best model for trees and palms according to the RSE (and AIC) value was <em>log2</em> :</p>
 <div id="trees" class="section level3">
-<h3><span class="header-section-number">4.1.1</span> Trees</h3>
-<pre class="r"><code>#Add Mtree and Mpalm with plots</code></pre>
+<h3>Trees</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre><code>##      method  color      RSE    RSElog Average_bias
+## 1      log1   blue 5.563502 0.2828035  0.006807462
+## 2      log2  green 5.533186 0.2824357  0.005778913
+## 3   weibull orange 5.716071        NA  0.014248795
+## 4 michaelis purple 5.697336        NA  0.034331636</code></pre>
 </div>
 <div id="palms" class="section level3">
-<h3><span class="header-section-number">4.1.2</span> Palms</h3>
-<pre class="r"><code>#Add Mtree and Mpalm with plots</code></pre>
+<h3>Palms</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<pre><code>##      method  color      RSE    RSElog Average_bias
+## 1      log1   blue 4.328590 0.2932210  0.002015264
+## 2      log2  green 4.196784 0.2845017  0.002071325
+## 3   weibull orange 4.442285        NA  0.077581455
+## 4 michaelis purple 4.779870        NA  0.078270010</code></pre>
+<p><br><br></p>
 </div>
 </div>
 </div>
 <div id="agb-estimation" class="section level1">
-<h1><span class="header-section-number">5</span> AGB estimation</h1>
-<p>The formula was….</p>
+<h1>AGB estimation</h1>
+<p>In this case, we applied Chave et al. (2014) Eq. 4 to estimate AGB for each tree:</p>
+<p><span class="math display">\[AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}\]</span></p>
+<div id="individual-agb-by-different-height-estimations" class="section level2">
+<h2>Individual AGB by different height estimations</h2>
+<p>AGB_tree was calculated using heights predicted by the 4 D-H methods</p>
+<p><br></p>
+<div id="figures-for-each-height-estimation-method" class="section level3 tabset">
+<h3 class="tabset">figures for each height estimation method</h3>
+<p>Each with loess smooth line…</p>
+<div id="agb.l1" class="section level4">
+<h4>AGB.L1</h4>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+</div>
+<div id="agb.l2" class="section level4">
+<h4>AGB.L2</h4>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-14-2.png" width="672" /></p>
+</div>
+<div id="agb.mi" class="section level4">
+<h4>AGB.mi</h4>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-14-3.png" width="672" /></p>
+</div>
+<div id="agb.we" class="section level4">
+<h4>AGB.we</h4>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-14-4.png" width="672" /></p>
+</div>
+</div>
+<div id="loess-compare" class="section level3">
+<h3>loess compare</h3>
+<p><em>Add the plot of loess lines…</em></p>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+</div>
+</div>
+<div id="agb-by-plot-and-agbd" class="section level2">
+<h2>AGB by plot and AGBD</h2>
+<p>AGBp is the sum of AGB of all individual in the plot</p>
+<p>AGBD is AGBp divided by area: [MgC/ha]. Here we have some decisions to make: which area? I have the teorical area and the area from shapefiles. <em>add 1:1 plot of both</em></p>
+<p>ACD is AGBD multiplied by .48 (<em>NOTE: add ref</em>) which is the carbon content.</p>
+<p><br></p>
+</div>
+<div id="some-figures-relating-agbd-with-something" class="section level2">
+<h2>Some figures relating AGBD with something…</h2>
+<p><em>Add some other descriptive figures &amp; tables.</em></p>
+<p><br></p>
+</div>
 </div>
 <div id="error-propagation" class="section level1">
-<h1><span class="header-section-number">6</span> Error propagation</h1>
-<p>Markov chains…</p>
+<h1>Error propagation</h1>
+<pre class="r"><code># Per plot using the local HD model constructed above (modelHD)
+resultMC.t &lt;- AGBmonteCarlo(
+  D = INV$DBH[INV$tree.type==&#39;O&#39;], WD = INV$meanWD[INV$tree.type==&#39;O&#39;], errWD = INV$sdWD[INV$tree.type==&#39;O&#39;],
+  HDmodel = HDmodel2.t, Dpropag = &quot;chave2004&quot;
+)
+resMC &lt;- summaryByPlot(resultMC.t$AGB_simu, INV$plotID[INV$tree.type==&#39;O&#39;])
+head(resMC)</code></pre>
 </div>
 
 
