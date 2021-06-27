@@ -1,11 +1,17 @@
 ---
 title: "Estimating carbon from lidar"
-date: "Last update: 01-Jun-2021"
+date: "Last update `r format(Sys.time(), '%d-%b-%Y')`"
 output: 
       html_document:
           toc: true
           toc_float: true
 ---
+
+
+```{r echo=FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
+
 <style>
 body {
 text-align: justify}
@@ -15,22 +21,23 @@ text-align: justify}
 
 
 
-Hi! I created this website to keep you updated with the project! First, I'll give an overview of what we want to do and then the different processes and analysis I have done so far. Main tabs of this website explain further how I processed data for each of the elements of the model (*i.e.*, AGB, TCH, BA & ρ) as well as the modelling process.
+Hi! I created this website to keep you updated with the project! First, I give an overview of what we want to develop and then the different processes and analyses I have done so far. Main tabs of this website explain further how I processed data for each of the elements of the model (*i.e.*, AGB, TCH, BA & ρ) as well as the modelling process.
 
 <br>
 
 # Project overview
 
-The main goal is to generate equations to estimate aboveground biomass/carbon (AGB/ACD) from lidar. We want to better understand variation in Wood Density (ρ) and Basal Area (BA) to improve the Top-of-the-Canopy Height (TCH) - Biomass relationships. The aim is to generate the following model:
+The main goal is to generate equations to estimate aboveground biomass/carbon (AGB/ACD) from lidar. We want to better understand variation in Wood Density (ρ) and Basal Area (BA) to improve the Top-of-the-Canopy Height (TCH) - Biomass relationships. The aim is to generate models based on the following expression:
 
 
 $$
-ACD_{plot} = a · TCH^d · BA^c · ρ^b
+ACD_{plot} = a · TCH^b · BA^c · ρ^d
 $$
 
-ACD will be calculated using field plot data by summing [above-ground biomass](01_agb.html) (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.47, which is the conversion factor for carbon content (Martin & Thomas, 2011). 
+ACD will be calculated using field plot data by summing [above-ground biomass](01_agb.html) (AGB) for each tree (Chave et al., 2014) and then multiplying by 0.48, which is the conversion factor for carbon content (Martin & Thomas, 2011). 
 
-LiDAR data will be used to [calculate TCH](02_tch.html), while [BA](03_ba.html#wood-density-(plot)) and [ρ (*aka* WD)](03_ba.html#basal-area-(plot)) are derived from field plot data. Our aim is to provide a better understanding on how BA and ρ affect ACD-TCH relationships to improve carbon estimations.
+LiDAR data will be used to [calculate TCH](02_tch.html), while [BA](03_ba.html#wood-density-(plot)) and [ρ (*aka* WD)](03_ba.html#basal-area-(plot)) are derived from field plot data. 
+<!-- Our aim is to provide a better understanding on how BA and ρ affect ACD-TCH relationships to improve carbon estimations. -->
 
 <br>
 
@@ -40,7 +47,10 @@ LiDAR data will be used to [calculate TCH](02_tch.html), while [BA](03_ba.html#w
 
 While other datasets are yet to come, I am working with forest inventories plus matching lidar from Paisagens Sustentáveis (**PaiSus**) and Marcus Vinicio Neves d'Oliveira (**MarVin**) in Brazil. 
 
-Other colaborators.. Jean and Eric... EBA project, etc.
+Other colaborators will hopefully provide their datasets.
+
+*NOTE: Sassan Saatchi shared data for the Colombian Chocó but I still have to incorpore those into the analysis*
+
 
 <br>
 
@@ -54,49 +64,49 @@ nl0 <- length(table(INV$location))
 ntranp <- table(unique(INV[grep('500',INV$sizeplot), c('parcela','sizeplot')])$sizeplot)
 INV <- INV[!grepl('500',INV$sizeplot),]
 
-## db.parcela creation and selecting the plots for the analysis
-db.parcela <- unique(INV[c("state","Name","location","plotID","sizeplot","parcela","year","owner")])
-(npini <- nrow(db.parcela))
+## db parcela (dbp) creation and selecting the plots for the analysis
+dbp <- unique(INV[c("state","Name","location","plotID","sizeplot","parcela","year","owner")])
+(npini <- nrow(dbp))
 
-cndbp <-  !(db.parcela$location=='ANA_A01' & db.parcela$year==2018) & 
-          !(db.parcela$location=='CAU_A01' & db.parcela$year==2014) & 
-          !(db.parcela$location=='CAU_A01' & db.parcela$plotID%in%c('T01_P3','T01_P4','T05_P1')) & 
-          !(db.parcela$location=='JAM_A02' & grepl('T03|T01_P1',db.parcela$plotID)) & 
-          !(db.parcela$location=='PAR_A01' & db.parcela$plotID=='P13') & 
-          !(db.parcela$location=='SAN_A01' & db.parcela$year==2016) & 
-          !(db.parcela$location=='SAN_A02' & db.parcela$plotID=='G01_P04') & 
-          !db.parcela$location=='TAC_A01' & 
-          !(db.parcela$location=='TAP_A01' & db.parcela$year%in%c(2018,2016)) & 
-          !(db.parcela$location=='TAP_A03' & db.parcela$plotID=='P59')
+cndbp <-  !(dbp$location=='ANA_A01' & dbp$year==2018) & 
+          !(dbp$location=='CAU_A01' & dbp$year==2014) & 
+          !(dbp$location=='CAU_A01' & dbp$plotID%in%c('T01_P3','T01_P4','T05_P1')) & 
+          !(dbp$location=='JAM_A02' & grepl('T03|T01_P1',dbp$plotID)) & 
+          !(dbp$location=='PAR_A01' & dbp$plotID=='P13') & 
+          !(dbp$location=='SAN_A01' & dbp$year==2016) & 
+          !(dbp$location=='SAN_A02' & dbp$plotID=='G01_P04') & 
+          !dbp$location=='TAC_A01' & 
+          !(dbp$location=='TAP_A01' & dbp$year%in%c(2018,2016)) & 
+          !(dbp$location=='TAP_A03' & dbp$plotID=='P59')
 631-32-88-3-5-1-8-1-27-11-1
-db.parcela <- db.parcela[cndbp,]
-npfin <- nrow(db.parcela) # Se quitaron 177 parcelas
+dbp <- dbp[cndbp,]
+npfin <- nrow(dbp) # Se quitaron 177 parcelas
 npini-npfin
 
-INV <- INV[INV$parcela%in%db.parcela$parcela,]
+INV <- INV[INV$parcela%in%dbp$parcela,]
 
 # Number of individuals
 z <- data.frame(table(INV$parcela))
 (names(z) <- c('parcela','n'))
-db.parcela <- merge(db.parcela, z, by = 'parcela')
+dbp <- merge(dbp, z, by = 'parcela')
 
 # Number of Dead
 z <- table(INV$parcela,INV$dead)
-db.parcela <- merge(db.parcela, data.frame(alive=z[,1], dead=z[,2], parcela=row.names(z)), by = 'parcela')
-db.parcela$dead.percent <- round(db.parcela$dead/db.parcela$n*100,1)
+dbp <- merge(dbp, data.frame(alive=z[,1], dead=z[,2], parcela=row.names(z)), by = 'parcela')
+dbp$dead.percent <- round(dbp$dead/dbp$n*100,1)
 
 table(INV$dead, useNA = 'ifany')
 table(!is.na(INV$DBH[INV$dead])) # there are many dead individuals with DBH
 
-npdead <- nrow(db.parcela[db.parcela$dead.percent >= 50 & db.parcela$n <= 10,])
-db.parcela <- db.parcela[!(db.parcela$dead.percent >= 50 & db.parcela$n <= 10),] # 8 plots less. Aca se perdieron unas parcelas porque todos sus individuos estan muertos (ie, algunas de FN)
-INV <- INV[INV$parcela%in%db.parcela$parcela,]
+npdead <- nrow(dbp[dbp$dead.percent >= 50 & dbp$n <= 10,])
+dbp <- dbp[!(dbp$dead.percent >= 50 & dbp$n <= 10),] # 8 plots less. Aca se perdieron unas parcelas porque todos sus individuos estan muertos (ie, algunas de FN)
+INV <- INV[INV$parcela%in%dbp$parcela,]
 
 niddbh <- table(!is.na(INV$DBH[INV$dead])) # there are many dead individuals with DBH
 INV <- INV[!INV$dead,] 
 
-length(db.parcela$parcela)==length(unique(INV$parcela))
-table(db.parcela$parcela%in%unique(INV$parcela))
+length(dbp$parcela)==length(unique(INV$parcela))
+table(dbp$parcela%in%unique(INV$parcela))
 
 table(INV$tree.type, useNA = 'ifany')
 niL <- nrow(INV[INV$tree.type=='L',])
@@ -120,7 +130,8 @@ All inventories matching with lidar (```r np0```plots/tansects in ```r nl0``` lo
 
 - ```r npdead``` plots which had more than half of the trees dead and less than 10 individuals.
 
-- ```r sum(niddbh)``` dead individuals were removed.  *(I may add them later into biomass estimations, ```r niddbh[2]``` dead trees (```r round(niddbh[2]/sum(niddbh)*100,0)```%) have DBH measurements)*.  *NOTE: MarVin dead trees are...*
+- ```r sum(niddbh)``` dead individuals were removed.  *(I may add them later into biomass estimations, ```r niddbh[2]``` dead trees (```r round(niddbh[2]/sum(niddbh)*100,0)```%) have DBH measurements)*.  
+  *NOTE: MarVin dead trees are...*
 
 - ```r niL``` lianas.
 
@@ -136,10 +147,10 @@ message('Number of individuals by size and project:')
 table(INV$owner,INV$sizeplot)
 
 message('Number of plots by size and project:')
-table(db.parcela$owner,db.parcela$sizeplot)
+table(dbp$owner,dbp$sizeplot)
 
 message('Number of plots by size and project-location:')
-table(paste(db.parcela$owner,db.parcela$location),db.parcela$sizeplot)
+table(paste(dbp$owner,dbp$location),dbp$sizeplot)
 
 ```
 
@@ -147,7 +158,7 @@ table(paste(db.parcela$owner,db.parcela$location),db.parcela$sizeplot)
 
 ## Map of inventory and lidar boundaries
 
-The following map shows plot locations and lidar transects available for the analysis: *(NOTE: this is an outdated map. MarVin plots are not included)*
+The following map shows plot locations and lidar transects available for the analysis: *(NOTE: this is an outdated map. MarVin and Sassans plots are not included)*
 
 
 

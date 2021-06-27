@@ -1,11 +1,17 @@
 ---
 title: "Above-Ground Biomass (AGB)"
-date: "Last update 11/05/2021"
 output: 
       html_document:
           toc: true
+          toc_depth: 2
           toc_float: true
 ---
+
+
+```{r echo=FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
+
 <style>
 body {
 text-align: justify}
@@ -18,13 +24,13 @@ text-align: justify}
 In order to calculate Above-ground biomass (AGB) from field inventories, allometric ecuations are used. In this case, we applied Chave et al. (2014) Eq. 4:
 
 $$AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}$$
-which relates AGB with [Wood Density](#wood-density) ($WD$), stem [Diameter](#dbh) ($D$ *aka* $DBH$) and [Height](#height) ($H$) of each tree.
+which relates [AGB](#agbacd-estimation) with [Wood Density](#wood-density) ($WD$), stem [Diameter](#dbh) ($D$ *aka* $DBH$) and [Height](#height) ($H$) of each tree.
 
 <br>
 
 ```{r echo=F, results='hide'}
 INV <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/all_inventories_v3_wd_clean.csv')
-db.parcela <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v1_wd_clean.csv')
+dbp <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v1_wd_clean.csv')
 ```
 
 # Wood Density
@@ -44,7 +50,9 @@ table(INV$WD_level2)[c(3,1,2)]
 
 # DBH
 
-Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees >35cm DBH in the whole plot area and >10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m subplot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.
+## sub-plots & min DBH
+
+Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees >35cm DBH in the whole plot area and >10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m sub-plot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.
 
 
 <center>
@@ -56,17 +64,14 @@ Plots from Paisagens Sustentáveis have different DBH threshold in their plots. 
 
 ```{r, echo=F}
 
-message('Minimum DBH in plot and sub-plot (Paisagens Sustentáveis)')
+message('Minimum DBH in plot and sub-plot (Paisagens Sustentáveis):')
 z <- read.csv('~/Rproj/07_carbon_br/data/inventories/Paisagem sustentais/plot_subplot_DBH.csv')
 z[z$minDBH.plot==z$minDBH.subplot,c('minDBH.subplot','area.subplot')] <- NA
 z
 
-```
+cat('\n\n')
 
-<br>
-
-Min and Max DBH in data (by location):
-```{r echo=F}
+message('Min and Max DBH in data (by location):')
 tmp <- do.call(rbind,tapply(INV$DBH, paste(INV$owner,INV$location,INV$year,INV$sizeplot), range))
 colnames(tmp) <- c('Min','Max')
 tmp
@@ -86,40 +91,45 @@ table(INV$owner,cut(INV$DBH, breaks = c(0,5,10,35,Inf), right = F))
 
 <br>
 
+## DBH distribution{.tabset}
+
 This is the distribution of DBH in our data:
 
-## {.tabset}
 ```{r results='asis',echo=F}
-cat('###','All inventories',' \n')
-dAll <- hist(INV$DBH, breaks = 5*0:round(max(INV$DBH)/5), plot = F)
-dPS <- hist(INV$DBH[INV$owner=='PaiSus'], breaks = 5*0:round(max(INV$DBH)/5), plot = F)
-dAC <- hist(INV$DBH[INV$owner=='MarVin'], breaks = 5*0:round(max(INV$DBH)/5), plot = F)
+cat('###','All inventories{.unnumbered}',' \n')
+bks <- 5*0:round(max(INV$DBH)/5)
+dAll <- hist(INV$DBH, breaks = bks, plot = F)
+dPS <- hist(INV$DBH[INV$owner=='PaiSus'], breaks = bks, plot = F)
+dAC <- hist(INV$DBH[INV$owner=='MarVin'], breaks = bks, plot = F)
 
 x <- barplot(rbind(dPS$counts,dAC$counts), col=c('gold2','cyan3'), ylim = range(dAll$counts)*1.1,
         las=2, cex.names=.8, border=NA,
         xlab='Diameter at Breast Height (DBH)', ylab='Frequency', main= 'All')
 psxi <- x[1]-mean(diff(x))/2
-psxs <- (1:50*mean(diff(x)))
-axis(1,c(psxi,psxi+psxs[1:5*10]),pretty(INV$DBH))
+psxs <- (1:(length(bks)-1)*mean(diff(x)))
+psxc <- data.frame(bks,pos=c(psxi,psxi+psxs)) 
+psxp <- predict(lm(pos~bks, data = psxc), newdata =  data.frame(bks=pretty(bks)))  
+
+axis(1,  psxp, pretty(bks), line=.2)
 abline(v=psxi+psxs[c(10,35)/5], col='red', lty=2)
 text(psxi+psxs[c(10,35)/5],max(dAll$counts)*1.07, labels=c('10 cm','35 cm'), cex=.7, adj=0, col='grey50')
 legend('topright', legend = c('PaiSus','MarVin'), fill = c('gold2','cyan3'), bty='n', border = NA)
 cat(' \n \n')
 
-cat('###','PaiSus',' \n')
+cat('###','PaiSus{.unnumbered}',' \n')
 barplot(dPS$counts, col='gold2', ylim = range(dAll$counts)*1.1,
         las=2, cex.names=.8, border=NA,
         xlab='Diameter at Breast Height (DBH)', ylab='Frequency', main= 'PaiSus')
-axis(1,c(psxi,psxi+psxs[1:5*10]),pretty(INV$DBH))
+axis(1,  psxp, pretty(bks), line=.2)
 abline(v=psxi+psxs[c(10,35)/5], col='red', lty=2)
 text(psxi+psxs[c(10,35)/5],max(dAll$counts)*1.07, labels=c('10 cm','35 cm'), cex=.7, adj=0, col='grey50')
 cat(' \n \n')
 
-cat('###','MarVin',' \n')
+cat('###','MarVin{.unnumbered}',' \n')
 barplot(dAC$counts, col='cyan3', ylim = range(dAll$counts)*1.1,
         las=2, cex.names=.8, border=NA,
         xlab='Diameter at Breast Height (DBH)', ylab='Frequency', main= 'MarVin')
-axis(1,c(psxi,psxi+psxs[1:5*10]),pretty(INV$DBH))
+axis(1,  psxp, pretty(bks), line=.2)
 abline(v=psxi+psxs[c(10,35)/5], col='red', lty=2)
 text(psxi+psxs[c(10,35)/5],max(dAll$counts)*1.07, labels=c('10 cm','35 cm'), cex=.7, adj=0, col='grey50')
 
@@ -152,7 +162,9 @@ table(paste(INV$owner,INV$location),!is.na(INV$height))[,2:1]
 
 ## Diameter-Height Models
 
-I estimated tree height from DBH measurements by fitting DBH-Height (D-H) models . The relationship between DBH and height is different for trees and palms, so each had its own D-H model (*TODO: add palm ref.*). There were ~30 crazy D-H data pairs (outliers) which I excluded when building the models (*e.g.*, height = 48.2 m when DBH = 12.7 cm).
+Tree height was estimated by fitting DBH-Height (D-H) models. The relationship between DBH and height is different for trees and palms, so each had its own D-H model (*TODO: add palm ref.*). There were ~30 crazy D-H data pairs (outliers) which I excluded when building the models (*e.g.*, height = 48.2 m when DBH = 12.7 cm).
+
+Height was predicted for ```r Hbytp1[1]``` trees and ```r Hbytp1[2]``` palms from D-H models that were fitted using data from ```r Hbytp0[1]``` trees and ```r Hbytp0[2]``` palms:
 
 ```{r echo=F}
 
@@ -164,11 +176,11 @@ legend('bottomright',legend = c('Trees','Palms'), col = c("#4292C6","#FF6D73"), 
 
 ```
 
-Models were fitted using data from ```r Hbytp0[1]``` trees and ```r Hbytp0[2]``` palms.
-Then, I predicted height for ```r Hbytp1[1]``` trees and ```r Hbytp1[2]``` palms.
 
 
-Four models were fitted using the `BIOMASS` package in R:
+<br>
+
+Four D-H models were constucted using the `BIOMASS` package in R:
 
 |method|equation| 
 |---|---|
@@ -178,6 +190,9 @@ Four models were fitted using the `BIOMASS` package in R:
 |michaelis|$H = (A * D)/(B + D)$|
 |
 
+<br>
+
+## Model comparison {.tabset}
 
 ```{r echo=F, message=FALSE}
 require(BIOMASS)
@@ -198,22 +213,21 @@ k <- INV[kcond,] # No height needing prediction
 
 ```
 
-## Model comparison {.tabset}
+Best model for trees and palms according to the RSE (and AIC) value was *log2*:
 
-Best model for trees and palms according to the RSE (and AIC) value was *log2* :
-
-### Trees
-```{r echo=FALSE, message=FALSE}
+### Trees{.unnumbered}
+```{r echo=FALSE, message=FALSE, fig.asp=.7, fig}
 (Mtree <- modelHD(
   D = i$DBH, H = i$height,
   drawGraph = TRUE, useWeight = TRUE
 ))
 ```
 
+<br><br>
 
-### Palms
+### Palms{.unnumbered}
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=FALSE, message=FALSE, fig.asp=.7}
 (Mpalm <- modelHD(
   D = j$DBH, H = j$height,
   drawGraph = TRUE, useWeight = TRUE
@@ -224,89 +238,340 @@ Best model for trees and palms according to the RSE (and AIC) value was *log2* :
 <br><br>
 
 
-# AGB estimation
-In this case, we applied Chave et al. (2014) Eq. 4 to estimate AGB for each tree:
+# AGB/ACD estimation
+We applied Chave et al. (2014) Eq. 4 to estimate *AGB~ind~* [Mg] for each individual using the `BIOMASS` package:
 
-$$AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}$$
+$$AGB_{ind} = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}$$
 
-## Individual AGB by different height estimations
+## AGB from D-H models
 
-AGB_tree was calculated using heights predicted by the 4 D-H methods
+*AGB~ind~* was calculated using heights predicted from the four D-H models:
 
 ```{r echo=F, results='hide'}
 INV <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/all_inventories_v5_agb.csv')
-# db.parcela <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v1_wd_clean.csv')
+dbp <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v2_agb.csv')
 ```
 
-<br>
 
-### figures for each height estimation method {.tabset}
+### AGB-DBH{.tabset -}
 
-Each with loess smooth line...
-
-```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE} 
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE} 
 nnAGB <- sort(grep('AGB',names(INV), value=T))
 maxAGB <- max(INV[,nnAGB])
+mt <- c('log1','log2','Weibull','Michaelis')
 for(i in 1:length(nnAGB)) {
-  cat('####',nnAGB[i],'\n')
+  cat('####',mt[i],'{.unnumbered}\n')
   plot(INV$DBH, INV[,nnAGB[i]], cex=.7, pch = 20, col = densCols(INV$DBH,INV[,nnAGB[i]]),
        xlim = range(INV$DBH), ylim=c(0,maxAGB), 
-       main = nnAGB[i], ylab = 'AGB')
-  lines(loess.smooth(INV$DBH[INV$DBH>=35], INV[INV$DBH>=35,nnAGB[i]],family = 'gaussian'))
-  abline(v=c(10,35), lty=2)
+       main = mt[i], ylab = 'AGB (Mg)', xlab = 'DBH (cm)')
+  lines(loess.smooth(INV$DBH, INV[,nnAGB[i]],family = 'gaussian'), col='grey30')
+  legend('bottomright', legend = 'LOESS smooth line', lty=1, bty='n', col='grey30')
+  abline(v=c(10,35), col='red', lty=2)
+  text(c(10,35), 100, labels=c('10 cm','35 cm'), cex=.7, adj=0, col='grey50')
   cat(' \n \n')
 }
 
-
 ```
 
 
-### loess compare
-
-*Add the plot of loess lines...*
+### loess
 
 ```{r echo=FALSE}
 col.range <- sf::sf.colors(length(nnAGB),categorical = T)
 par(mfrow=c(1,1))
 plot(0, xlim = range(INV$DBH), ylim=c(0,maxAGB), 
-     main = 'AGB compare\n(loess)', xlab='DBH', ylab= 'AGB',col = NA)
+     main = 'AGB compare (loess)', xlab='DBH', ylab= 'AGB (Mg C)',col = NA)
 for(i in 1:length(nnAGB)) lines(loess.smooth(INV$DBH, INV[,nnAGB[i]], family = 'gaussian'),
                                 col = col.range[i], lwd=2)
-abline(v=c(10,35), lty=2)
-legend('top', legend = nnAGB, col = col.range, lwd = 2, bty = 'n')
+legend('top', legend = mt, col = col.range, lwd = 2, bty = 'n')
+abline(v=c(10,35), col='black', lty=2)
+text(c(10,35), 100, labels=c('10 cm','35 cm'), cex=.7, adj=0, col='grey50')
+
 ```
 
 
 
+## AGB~plot~ (expansion factor)
 
 
+*AGB~plot~* is the sum of *AGB~ind~* of all individual in the plot, but it then starts to get tricky here because the minimum DBH in all plots is not the same, so some corrections have to be done.
+First, we need to define a minimum DBH for all plots to make them comparable between each other. In this case, it will be 10 cm, therefore any individual below that will be excluded from *AGB~plot~* calculation. Second, as explained [above](#dbh), some inventories measured trees from 10 cm only in a sub-plot area, so an expansion factor must be applied in those:
 
-## AGB by plot and AGBD
+$$ AGB_{plot} = \beta_{subplot \space [10,35)} * AGB_{subplot \space [10,35)} + AGB_{ [35,Inf)} $$
 
-AGBp is the sum of AGB of all individual in the plot
+$$ \beta_{subplot \space [10,35)} = \frac{area_{plot}}{area_{subplot \space [10,35)}}$$
 
-AGBD is AGBp divided by area: [MgC/ha]. Here we have some decisions to make: which area? I have the teorical area and the area from shapefiles. *add 1:1 plot of both*
 
-ACD is AGBD multiplied by .48 (*NOTE: add ref*) which is the carbon content.
-
-<br>
-
-## Some figures relating AGBD with something...
-
-*Add some other descriptive figures & tables.*
+Further corrections to *AGB~plot~* should be made to incorporate biomass from 5 to 10 cm DBH if we are to compare these results with results from Asner & Mascaro (201X) which biomass estimations are for plots from trees measured from 5 cm DBH.
 
 <br>
 
+## AGBD & ACD
 
-# Error propagation
+Above-Ground Biomass Density (AGBD) is biomass per unit of area [Mg/ha]:
 
-```{r eval=FALSE}
-# Per plot using the local HD model constructed above (modelHD)
-resultMC.t <- AGBmonteCarlo(
-  D = INV$DBH[INV$tree.type=='O'], WD = INV$meanWD[INV$tree.type=='O'], errWD = INV$sdWD[INV$tree.type=='O'],
-  HDmodel = HDmodel2.t, Dpropag = "chave2004"
-)
-resMC <- summaryByPlot(resultMC.t$AGB_simu, INV$plotID[INV$tree.type=='O'])
-head(resMC)
+$$ AGBD = \frac{AGB_{plot}}{area_{plot}} $$
+
+For defining the area of the plot, we have two options: 
+
+1. using the nominal area of the plot (*e.g.*, 50m x 50m = 0.25ha)
+
+2. using the area calculated from the polygon shapefile. 
+
+I used the nominal area in further calculations.
+
+
+*TODO: add 1:1 plot of both areas*
+
+
+Then, to get Above-ground Carbon Density (ACD), AGBD is multiplied by 0.48 (Martin & Thomas, 2011) which is the carbon content [Mg~C~/ha].
+
+$$ ACD = 0.48 \times \left( \frac{AGB_{plot}}{area_{plot}}\right)  =  0.48 \times AGBD $$
+
+<br>
+
+## ACD distribution{.tabset}
+```{r results='asis',echo=F}
+cat('###','All inventories{.unnumbered}',' \n')
+bks <- 10*0:(round(max(dbp$ACD)/10)+1)
+dAll <- hist(dbp$ACD, breaks = bks, plot = F)
+dPS <- hist(dbp$ACD[INV$owner=='PaiSus'], breaks = bks, plot = F)
+dAC <- hist(dbp$ACD[INV$owner=='MarVin'], breaks = bks, plot = F)
+
+x <- barplot(rbind(dPS$counts,dAC$counts), col=c('gold2','cyan3'), ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'All')
+psxi <- x[1]-mean(diff(x))/2
+psxs <- (1:(length(bks)-1)*mean(diff(x)))
+psxc <- data.frame(bks,pos=c(psxi,psxi+psxs)) 
+psxp <- predict(lm(pos~bks, data = psxc), newdata =  data.frame(bks=pretty(bks)))  
+
+axis(1,  psxp, pretty(bks), line=.2)
+legend('topright', legend = c('PaiSus','MarVin'), fill = c('gold2','cyan3'), bty='n', border = NA)
+cat(' \n \n')
+
+cat('###','PaiSus{.unnumbered}',' \n')
+barplot(dPS$counts, col='gold2', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'PaiSus')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n')
+
+cat('###','MarVin{.unnumbered}',' \n')
+barplot(dAC$counts, col='cyan3', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'MarVin')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n ')
+
 ```
 
+
+
+## Error propagation
+
+Here the error from height estimation is different for palms and trees as these were separate models ([see above](#model-comparison)). Best D-H model with less RSE for palms and trees was the *log2* method: RSE~tree~ = ```r round(Mtree$RSE[Mtree$method=='log2'],2)``` and RSE~palm~ = ```r round(Mpalm$RSE[Mtree$method=='log2'],2)```. For individuals with heights directly measured, a 'RSE' of 0.5 m was assigned.
+
+
+The [expansion factor](#agbplot) from sub-plots is not accounted in error propagation here, therefore this needs further definition. However, here is the code to calculate it using the `BIOMASS` package:
+```{r cache=TRUE}
+## PROPAGATING ERRORS ----
+# Per plot using RSE 
+resultMC <- AGBmonteCarlo(
+  D = INV$DBH, WD = INV$meanWD, errWD = INV$sdWD,
+  H = INV$height.L2, errH = INV$RSE.H.L2,
+  Dpropag = "chave2004")
+
+Res <- summaryByPlot(resultMC$AGB_simu, INV$parcela)
+Res <- Res[order(Res$AGB), ]
+plot(Res$AGB*.48, pch = 20, xlab = "Plots", ylab = "ACD (Mg C/ha)", ylim = c(0, max(Res$Cred_97.5)*.48))
+segments(1:nrow(Res), Res$Cred_2.5*.48, 1:nrow(Res), Res$Cred_97.5*.48, col = "red")
+```
+
+
+
+```{r echo=F, results='hide'}
+INV <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/all_inventories_v6_ba.csv')
+dbp <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v3_ba_wd.csv')
+```
+
+# Basal Area (plot)
+
+## Formulation
+
+Basal Area (BA) is the area occupied by stems in the plot. Assuming that all trees are circular, basal area for each individual is calculated with the classic formula of diameter-area relation in a circle:
+
+$$ BA_{ind} = \frac{\pi}{4}*DBH^2 $$
+
+Then, the BA of the plot (*BA~plot~*) is the aggregation of all individual BA (*BA~ind~*) divided by the plot area [m^2^/ha]:
+
+$$ BA_{plot} = \frac{\sum{BA_{ind}}}{area_{plot}}$$
+Similar to AGB, to adjust the contribution of 10 to 35 cm DBH individuals in proportion of the sub-plot area, an expansion factor was applied to BA.
+
+$$ BA_{plot\space[10,35)} = \beta_{subplot \space [10,35)} * \frac{\sum{BA_{ind\space[10,35)}}}{area_{plot}} $$
+
+$$ \because\space \beta_{subplot \space [10,35)} = \frac{area_{plot}}{area_{subplot \space [10,35)}} $$
+
+
+
+$$ BA_{plot\space[10,35)} = \frac{ \sum{BA_{ind\space[10,35)}}} {area_{subplot \space [10,35)}} $$
+
+and, given the contribution of BA from individuals above 35 cm DBH:
+
+
+$$ BA_{plot\space[35,Inf)} = \frac{\sum{BA_{ind\space[35,Inf)}}}{area_{plot}} $$
+
+total Basal Area for a plot [m^2^/ha] is:
+
+
+$$ BA_{plot} = \frac{ \sum{BA_{ind\space[10,35)}}} {area_{subplot \space [10,35)}} + \frac{\sum{BA_{ind\space[35,Inf)}}}{area_{plot}} $$
+
+<br>
+
+
+## BA distribution{.tabset}
+
+```{r results='asis',echo=F}
+cat('###','All inventories{.unnumbered}',' \n')
+bks <- 1*0:(round(max(dbp$BAplot)/1)+1)
+dAll <- hist(dbp$BAplot, breaks = bks, plot = F)
+dPS <- hist(dbp$BAplot[INV$owner=='PaiSus'], breaks = bks, plot = F)
+dAC <- hist(dbp$BAplot[INV$owner=='MarVin'], breaks = bks, plot = F)
+
+x <- barplot(rbind(dPS$counts,dAC$counts), col=c('gold2','cyan3'), ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab=expression('Basal Area ' (m^2/ha)), ylab='Frequency', main= 'All')
+
+psxi <- x[1]-mean(diff(x))/2
+psxs <- (1:(length(bks)-1)*mean(diff(x)))
+psxc <- data.frame(bks,pos=c(psxi,psxi+psxs))
+psxp <- predict(lm(pos~bks, data = psxc), newdata =  data.frame(bks=pretty(bks)))
+
+axis(1,  psxp, pretty(bks), line=.2)
+legend('topright', legend = c('PaiSus','MarVin'), fill = c('gold2','cyan3'), bty='n', border = NA)
+cat(' \n \n')
+
+cat('###','PaiSus{.unnumbered}',' \n')
+barplot(dPS$counts, col='gold2', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab=expression('Basal Area ' (m^2/ha)), ylab='Frequency', main= 'PaiSus')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n')
+
+cat('###','MarVin{.unnumbered}',' \n')
+barplot(dAC$counts, col='cyan3', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab=expression('Basal Area ' (m^2/ha)), ylab='Frequency', main= 'MarVin')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n ')
+
+```
+
+
+# Wood Density-ρ (plot)
+
+## Formulation
+
+ρ~plot~ is the BA-weighted mean wood density of the plot: 
+
+$$ \rho =  \frac {\sum {\left(BA_{ind} * WD_{ind} \right) }}{\sum{BA_{ind}}} $$
+
+Again, to account for the adjusted contribution of the 10-35cm DBH sub-plot individuals, I calculated the WD weighted mean separately for the ones with DBH above 35cm (ρ~plot [35,Inf)~) and for 10-35 cm DBH (ρ~subplot [10,35)~). Then I followed two approaches:
+
+
+1. Calculated the mean value of both (*i.e.*, this gives the same weight to both).
+
+$$ \rho_{1} =  \frac {\rho_{subplot\space[10,35)} + \rho_{[35,Inf)}  }{2}  $$
+
+2. Calculate a second weighted mean for both ρ, weighting them with their adjusted BA (*i.e.*, the whole plot area for the 35s and the sub-plot area for the 10-35s).
+
+$$ W_{[10,35)} = \beta_{subplot \space [10,35)} * \sum{BA_{ind\space[10,35)}}$$
+
+$$ W_{[35,Inf)} = \sum{BA_{ind\space[35,Inf)}}$$
+
+  then,
+
+$$ \rho_{2} =  \frac {W_{[10,35)} * \rho_{subplot\space [10,35)} + W_{[35,Inf)} * \rho_{[35,Inf)}  }{W_{[10,35)} +W_{[35,Inf)}}  $$
+
+
+```{r echo=FALSE}
+
+plot(dbp$WDplot1,dbp$WDplot2, pch=20, col = densCols(dbp$WDplot1,dbp$WDplot2),
+     ylab=expression(ρ[2]~(g/cm^3)), xlab = expression(ρ[1]~(g/cm^3)))
+abline(a=0, b=1, col='red')
+
+
+```
+
+
+## BA distribution{.tabset}
+
+```{r results='asis',echo=F}
+cat('###','All inventories{.unnumbered}',' \n')
+bks <- 0:(round(max(dbp$WDplot2)*20))/20
+dAll <- hist(dbp$WDplot2, breaks = bks, plot = F)
+dPS <- hist(dbp$WDplot2[INV$owner=='PaiSus'], breaks = bks, plot = F)
+dAC <- hist(dbp$WDplot2[INV$owner=='MarVin'], breaks = bks, plot = F)
+
+x <- barplot(rbind(dPS$counts,dAC$counts), col=c('gold2','cyan3'), ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'All')
+psxi <- x[1]-mean(diff(x))/2
+psxs <- (1:(length(bks)-1)*mean(diff(x)))
+psxc <- data.frame(bks,pos=c(psxi,psxi+psxs)) 
+psxp <- predict(lm(pos~bks, data = psxc), newdata =  data.frame(bks=pretty(bks)))  
+
+axis(1,  psxp, pretty(bks), line=.2)
+legend('topright', legend = c('PaiSus','MarVin'), fill = c('gold2','cyan3'), bty='n', border = NA)
+cat(' \n \n')
+
+cat('###','PaiSus{.unnumbered}',' \n')
+barplot(dPS$counts, col='gold2', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'PaiSus')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n')
+
+cat('###','MarVin{.unnumbered}',' \n')
+barplot(dAC$counts, col='cyan3', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'MarVin')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n ')
+
+```
+
+
+# ACD-BA-WD relationships
+
+## ACD-BA
+
+```{r echo=F}
+to.xy <- cbind(dbp$BAplot, dbp$ACD)
+xl <- expression('Basal Area ' (m^2/ha))
+yl <- expression("ACD " (Mg~C/ha))
+
+plot(to.xy, pch=20, col=densCols(to.xy), xlab = xl, ylab = yl)
+
+```
+
+
+## ACD-WD
+
+```{r echo=F}
+to.xy <- cbind(dbp$WDplot2, dbp$ACD)
+xl <- expression(ρ[2]~(g/cm^3))
+yl <- expression("ACD " (Mg~C/ha))
+
+plot(to.xy, pch=20, col=densCols(to.xy), xlab = xl, ylab = yl)
+
+```
+
+## BA-WD
+
+```{r echo=F}
+to.xy <- cbind(dbp$BAplot, dbp$WDplot2)
+xl <- expression('Basal Area ' (m^2/ha))
+yl <- expression(ρ[2]~(g/cm^3))
+
+plot(to.xy, pch=20, col=densCols(to.xy), xlab = xl, ylab = yl)

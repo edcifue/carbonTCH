@@ -362,13 +362,10 @@ div.tocify {
   <a href="index.html">The project</a>
 </li>
 <li>
-  <a href="01_agb.html">AGB-inventories</a>
+  <a href="01_agb.html">Field: AGB, BA &amp; ρ</a>
 </li>
 <li>
   <a href="02_tch.html">TCH-lidar</a>
-</li>
-<li>
-  <a href="03_ba.html">BA &amp; ρ</a>
 </li>
 <li>
   <a href="04_env.html">Environ. Variables</a>
@@ -389,7 +386,6 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Models</h1>
-<h4 class="date">Last update 11/05/2021</h4>
 
 </div>
 
@@ -399,9 +395,53 @@ body {
 text-align: justify}
 </style>
 <p><br></p>
-<div id="tch-lidar" class="section level1">
-<h1>TCH lidar</h1>
-<p>…</p>
+<div id="lidar-data" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Lidar data</h1>
+<p>We have lidar data from Paisagens Sustentáveis (<strong>PaiSus</strong>), Marcus Vinicio Neves d’Oliveira (<strong>MarVin</strong>), Estimativa de biomassa na Amazônia (<strong>EBA</strong>). From Sassan Saatchi we have 1-m resolution CHMs for lidar flights in Chocó, Colombia.</p>
+<p>Not all lidar transects have matching field inventories, therefore, I only processed lidar data with associated inventories.</p>
+<p><strong><em>TODO:</em></strong> <em>Add map and/or list.</em></p>
+<p><br></p>
+</div>
+<div id="canopy-height-models" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Canopy Height Models</h1>
+<p>LAStools were used to compute Canopy Height Models (CHM). First, point clouds had ground points classified, then height was normalised and a pit-free surface algorithm was applied to obtain a CHM of 1-m resolution.</p>
+<p>Scripts and pipelines were written in R, using the function <code>system()</code> to call LAStools. Since LAStools are Windows binaries, I used Wine software [<strong>TODO:</strong> <em>add link</em>] to run them under macOS Mojave (<strong>TODO:</strong> <em>add Wiki</em>).</p>
+<div id="ground-height-point-cloud" class="section level2" number="2.1">
+<h2 number="2.1"><span class="header-section-number">2.1</span> Ground &amp; Height (point cloud)</h2>
+<p>I followed this blog: <a href="https://rapidlasso.com/2014/11/04/rasterizing-perfect-canopy-height-models-from-lidar/">Rasterizing Perfect Canopy Height Models from LiDAR</a></p>
+<p>Ground points were classified using <code>lasground</code> and then height was normalised using <code>lasheight</code> dropping values above 80m as we know trees in these areas won’t be that tall and we can filter out <em>e.g.</em> points sampling birds flying.</p>
+<pre class="r"><code>las.input &lt;- &quot;./raw/ANA_A01_2017_laz/*.la{z,s}&quot;
+hnorm.dir &lt;- &quot;./hnorm/ANA_A01_2017_laz&quot;
+
+callground1 &lt;- paste(
+  &#39;wine&#39;, &#39;~/LAStools/bin/lasground_new&#39;,
+  &#39;-i&#39;, las.input,
+  &#39;-wilderness&#39;,
+  &#39;-odix _ground&#39;,
+  &#39;-olaz -odir&#39;, hnorm.dir
+  )</code></pre>
+<p>We paste all arguments and flags into a text string and then run it through the <code>system()</code> function:</p>
+<pre class="r"><code>system(callground1)</code></pre>
+<p>It will eventually call this command into the shell Terminal:</p>
+<pre><code>$ wine ~/LAStools/bin/lasground_new -i ./raw/ANA_A01_2017_laz/*.la{z,s} -wilderness -odix _ground -olaz -odir ./hnorm/ANA_A01_2017_laz</code></pre>
+<pre class="bash"><code>$ wine ~/LAStools/bin/lasground_new -i ./raw/ANA_A01_2017_laz/*.la{z,s} -wilderness -odix _ground -olaz -odir ./hnorm/ANA_A01_2017_laz</code></pre>
+</div>
+<div id="chm-computation" class="section level2" number="2.2">
+<h2 number="2.2"><span class="header-section-number">2.2</span> CHM computation</h2>
+<div id="average-pulse-spacing" class="section level3" number="2.2.1">
+<h3 number="2.2.1"><span class="header-section-number">2.2.1</span> Average pulse spacing</h3>
+<p>parameters– grid, subcircle,</p>
+</div>
+</div>
+</div>
+<div id="top-of-the-canopy-height" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> Top-of-the-Canopy Height</h1>
+<div id="tch-plots" class="section level2" number="3.1">
+<h2 number="3.1"><span class="header-section-number">3.1</span> TCH plots</h2>
+</div>
+</div>
+<div id="cover-10" class="section level1" number="4">
+<h1 number="4"><span class="header-section-number">4</span> Cover 10</h1>
 </div>
 
 
@@ -450,7 +490,7 @@ $(document).ready(function ()  {
 
     // establish options
     var options = {
-      selectors: "h1,h2,h3",
+      selectors: "h1,h2",
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {

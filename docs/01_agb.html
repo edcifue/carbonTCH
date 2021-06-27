@@ -362,13 +362,10 @@ div.tocify {
   <a href="index.html">The project</a>
 </li>
 <li>
-  <a href="01_agb.html">AGB-inventories</a>
+  <a href="01_agb.html">Field: AGB, BA &amp; ρ</a>
 </li>
 <li>
   <a href="02_tch.html">TCH-lidar</a>
-</li>
-<li>
-  <a href="03_ba.html">BA &amp; ρ</a>
 </li>
 <li>
   <a href="04_env.html">Environ. Variables</a>
@@ -389,7 +386,6 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Above-Ground Biomass (AGB)</h1>
-<h4 class="date">Last update 11/05/2021</h4>
 
 </div>
 
@@ -399,14 +395,14 @@ body {
 text-align: justify}
 </style>
 <p><br></p>
-<div id="background" class="section level1">
-<h1>Background</h1>
+<div id="background" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Background</h1>
 <p>In order to calculate Above-ground biomass (AGB) from field inventories, allometric ecuations are used. In this case, we applied Chave et al. (2014) Eq. 4:</p>
-<p><span class="math display">\[AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}\]</span> which relates AGB with <a href="#wood-density">Wood Density</a> (<span class="math inline">\(WD\)</span>), stem <a href="#dbh">Diameter</a> (<span class="math inline">\(D\)</span> <em>aka</em> <span class="math inline">\(DBH\)</span>) and <a href="#height">Height</a> (<span class="math inline">\(H\)</span>) of each tree.</p>
+<p><span class="math display">\[AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}\]</span> which relates <a href="#agbacd-estimation">AGB</a> with <a href="#wood-density">Wood Density</a> (<span class="math inline">\(WD\)</span>), stem <a href="#dbh">Diameter</a> (<span class="math inline">\(D\)</span> <em>aka</em> <span class="math inline">\(DBH\)</span>) and <a href="#height">Height</a> (<span class="math inline">\(H\)</span>) of each tree.</p>
 <p><br></p>
 </div>
-<div id="wood-density" class="section level1">
-<h1>Wood Density</h1>
+<div id="wood-density" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Wood Density</h1>
 <p>Wood Density (WD) was acquired from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the <code>BIOMASS</code> package in R.</p>
 <p>When WD for a species was not found, the mean WD of the genus was allocated. If an individual was not identified to genus, then the mean of the WD of the plot was selected.</p>
 <pre><code>##         
@@ -418,9 +414,11 @@ text-align: justify}
 ##   32284   22206   10549</code></pre>
 <p><br></p>
 </div>
-<div id="dbh" class="section level1">
-<h1>DBH</h1>
-<p>Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees &gt;35cm DBH in the whole plot area and &gt;10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m subplot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.</p>
+<div id="dbh" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> DBH</h1>
+<div id="sub-plots-min-dbh" class="section level2" number="3.1">
+<h2 number="3.1"><span class="header-section-number">3.1</span> sub-plots &amp; min DBH</h2>
+<p>Plots from Paisagens Sustentáveis have different DBH threshold in their plots. Many of them, measured trees &gt;35cm DBH in the whole plot area and &gt;10cm in a sub-plot area. Sub-plots vary in size across locations, for instance, a 10m x 50m sub-plot within a 50m x 50m plot. Therefore, some expansion factors will be applied when calculating plot AGB.</p>
 <center>
 <div class="figure">
 <img src="images/01_example_sampling_design.png" alt="" />
@@ -428,7 +426,7 @@ text-align: justify}
 </div>
 </center>
 <p><br></p>
-<pre><code>## Minimum DBH in plot and sub-plot (Paisagens Sustentáveis)</code></pre>
+<pre><code>## Minimum DBH in plot and sub-plot (Paisagens Sustentáveis):</code></pre>
 <pre><code>##     owner location year sizeplot minDBH.plot minDBH.subplot area.subplot
 ## 1  PaiSus  ANA_A01 2015    50x50          10             NA         &lt;NA&gt;
 ## 2  PaiSus  AND_A01 2013    50x50          35             10         5x50
@@ -446,8 +444,7 @@ text-align: justify}
 ## 14 PaiSus  TAL_A01 2014    50x50          35             10        10x50
 ## 15 PaiSus  TAP_A01 2015    50x50          10             NA         &lt;NA&gt;
 ## 16 PaiSus  TAP_A03 2015    50x50          10             NA         &lt;NA&gt;</code></pre>
-<p><br></p>
-<p>Min and Max DBH in data (by location):</p>
+<pre><code>## Min and Max DBH in data (by location):</code></pre>
 <pre><code>##                                   Min      Max
 ## MarVin EMB_A01 2016 100x100  0.600000 195.5000
 ## MarVin FEA_A01 2013 50x50    0.100000 163.9000
@@ -482,26 +479,27 @@ text-align: justify}
 ##   MarVin    19    914   43058     5900
 ##   PaiSus     3      1   11777     3367</code></pre>
 <p><br></p>
+</div>
+<div id="dbh-distribution" class="section level2 tabset" number="3.2">
+<h2 class="tabset" number="3.2"><span class="header-section-number">3.2</span> DBH distribution</h2>
 <p>This is the distribution of DBH in our data:</p>
-<div id="section" class="section level2 tabset">
-<h2 class="tabset"></h2>
-<div id="all-inventories" class="section level3">
-<h3>All inventories</h3>
+<div id="all-inventories" class="section level3 unnumbered">
+<h3 class="unnumbered">All inventories</h3>
 <p><img src="01_agb_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 </div>
-<div id="paisus" class="section level3">
-<h3>PaiSus</h3>
+<div id="paisus" class="section level3 unnumbered">
+<h3 class="unnumbered">PaiSus</h3>
 <p><img src="01_agb_files/figure-html/unnamed-chunk-6-2.png" width="672" /></p>
 </div>
-<div id="marvin" class="section level3">
-<h3>MarVin</h3>
+<div id="marvin" class="section level3 unnumbered">
+<h3 class="unnumbered">MarVin</h3>
 <p><img src="01_agb_files/figure-html/unnamed-chunk-6-3.png" width="672" /></p>
 <p><br></p>
 </div>
 </div>
 </div>
-<div id="height" class="section level1">
-<h1>Height</h1>
+<div id="height" class="section level1" number="4">
+<h1 number="4"><span class="header-section-number">4</span> Height</h1>
 <p>Height values are few among inventories (<code>3147</code> out of <code>61892</code>). Only PaiSus has height values, whereas MarVin has none.</p>
 <pre><code>## Individuals with height data by project owners</code></pre>
 <pre><code>##         
@@ -536,12 +534,13 @@ text-align: justify}
 ##   PaiSus TAP_A01   248   821
 ##   PaiSus TAP_A03   563   403</code></pre>
 <p><br></p>
-<div id="diameter-height-models" class="section level2">
-<h2>Diameter-Height Models</h2>
-<p>I estimated tree height from DBH measurements by fitting DBH-Height (D-H) models . The relationship between DBH and height is different for trees and palms, so each had its own D-H model (<em>TODO: add palm ref.</em>). There were ~30 crazy D-H data pairs (outliers) which I excluded when building the models (<em>e.g.</em>, height = 48.2 m when DBH = 12.7 cm).</p>
+<div id="diameter-height-models" class="section level2" number="4.1">
+<h2 number="4.1"><span class="header-section-number">4.1</span> Diameter-Height Models</h2>
+<p>Tree height was estimated by fitting DBH-Height (D-H) models. The relationship between DBH and height is different for trees and palms, so each had its own D-H model (<em>TODO: add palm ref.</em>). There were ~30 crazy D-H data pairs (outliers) which I excluded when building the models (<em>e.g.</em>, height = 48.2 m when DBH = 12.7 cm).</p>
+<p>Height was predicted for <code>56374</code> trees and <code>5518</code> palms from D-H models that were fitted using data from <code>3024</code> trees and <code>123</code> palms:</p>
 <p><img src="01_agb_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
-<p>Models were fitted using data from <code>3024</code> trees and <code>123</code> palms. Then, I predicted height for <code>56374</code> trees and <code>5518</code> palms.</p>
-<p>Four models were fitted using the <code>BIOMASS</code> package in R:</p>
+<p><br></p>
+<p>Four D-H models were constucted using the <code>BIOMASS</code> package in R:</p>
 <table>
 <thead>
 <tr class="header">
@@ -572,22 +571,24 @@ text-align: justify}
 </tr>
 </tbody>
 </table>
+<p><br></p>
 </div>
-<div id="model-comparison" class="section level2 tabset">
-<h2 class="tabset">Model comparison</h2>
-<p>Best model for trees and palms according to the RSE (and AIC) value was <em>log2</em> :</p>
-<div id="trees" class="section level3">
-<h3>Trees</h3>
-<p><img src="01_agb_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<div id="model-comparison" class="section level2 tabset" number="4.2">
+<h2 class="tabset" number="4.2"><span class="header-section-number">4.2</span> Model comparison</h2>
+<p>Best model for trees and palms according to the RSE (and AIC) value was <em>log2</em>:</p>
+<div id="trees" class="section level3 unnumbered">
+<h3 class="unnumbered">Trees</h3>
+<p><img src="01_agb_files/figure-html/fig-1.png" width="672" /></p>
 <pre><code>##      method  color      RSE    RSElog Average_bias
 ## 1      log1   blue 5.563502 0.2828035  0.006807462
 ## 2      log2  green 5.533186 0.2824357  0.005778913
 ## 3   weibull orange 5.716071        NA  0.014248795
 ## 4 michaelis purple 5.697336        NA  0.034331636</code></pre>
+<p><br><br></p>
 </div>
-<div id="palms" class="section level3">
-<h3>Palms</h3>
-<p><img src="01_agb_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<div id="palms" class="section level3 unnumbered">
+<h3 class="unnumbered">Palms</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
 <pre><code>##      method  color      RSE    RSElog Average_bias
 ## 1      log1   blue 4.328590 0.2932210  0.002015264
 ## 2      log2  green 4.196784 0.2845017  0.002071325
@@ -597,62 +598,176 @@ text-align: justify}
 </div>
 </div>
 </div>
-<div id="agb-estimation" class="section level1">
-<h1>AGB estimation</h1>
-<p>In this case, we applied Chave et al. (2014) Eq. 4 to estimate AGB for each tree:</p>
-<p><span class="math display">\[AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}\]</span></p>
-<div id="individual-agb-by-different-height-estimations" class="section level2">
-<h2>Individual AGB by different height estimations</h2>
-<p>AGB_tree was calculated using heights predicted by the 4 D-H methods</p>
-<p><br></p>
-<div id="figures-for-each-height-estimation-method" class="section level3 tabset">
-<h3 class="tabset">figures for each height estimation method</h3>
-<p>Each with loess smooth line…</p>
-<div id="agb.l1" class="section level4">
-<h4>AGB.L1</h4>
+<div id="agbacd-estimation" class="section level1" number="5">
+<h1 number="5"><span class="header-section-number">5</span> AGB/ACD estimation</h1>
+<p>We applied Chave et al. (2014) Eq. 4 to estimate <em>AGB<sub>ind</sub></em> [Mg] for each individual using the <code>BIOMASS</code> package:</p>
+<p><span class="math display">\[AGB_{ind} = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}\]</span></p>
+<div id="agb-from-d-h-models" class="section level2" number="5.1">
+<h2 number="5.1"><span class="header-section-number">5.1</span> AGB from D-H models</h2>
+<p><em>AGB<sub>ind</sub></em> was calculated using heights predicted from the four D-H models:</p>
+<div id="agb-dbh" class="section level3 tabset unnumbered">
+<h3 class="tabset unnumbered">AGB-DBH</h3>
+<div id="log1" class="section level4 unnumbered">
+<h4 class="unnumbered">log1</h4>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+</div>
+<div id="log2" class="section level4 unnumbered">
+<h4 class="unnumbered">log2</h4>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-13-2.png" width="672" /></p>
+</div>
+<div id="weibull" class="section level4 unnumbered">
+<h4 class="unnumbered">Weibull</h4>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-13-3.png" width="672" /></p>
+</div>
+<div id="michaelis" class="section level4 unnumbered">
+<h4 class="unnumbered">Michaelis</h4>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-13-4.png" width="672" /></p>
+</div>
+</div>
+<div id="loess" class="section level3" number="5.1.1">
+<h3 number="5.1.1"><span class="header-section-number">5.1.1</span> loess</h3>
 <p><img src="01_agb_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
 </div>
-<div id="agb.l2" class="section level4">
-<h4>AGB.L2</h4>
-<p><img src="01_agb_files/figure-html/unnamed-chunk-14-2.png" width="672" /></p>
 </div>
-<div id="agb.mi" class="section level4">
-<h4>AGB.mi</h4>
-<p><img src="01_agb_files/figure-html/unnamed-chunk-14-3.png" width="672" /></p>
+<div id="agbplot-expansion-factor" class="section level2" number="5.2">
+<h2 number="5.2"><span class="header-section-number">5.2</span> AGB<sub>plot</sub> (expansion factor)</h2>
+<p><em>AGB<sub>plot</sub></em> is the sum of <em>AGB<sub>ind</sub></em> of all individual in the plot, but it then starts to get tricky here because the minimum DBH in all plots is not the same, so some corrections have to be done. First, we need to define a minimum DBH for all plots to make them comparable between each other. In this case, it will be 10 cm, therefore any individual below that will be excluded from <em>AGB<sub>plot</sub></em> calculation. Second, as explained <a href="#dbh">above</a>, some inventories measured trees from 10 cm only in a sub-plot area, so an expansion factor must be applied in those:</p>
+<p><span class="math display">\[ AGB_{plot} = \beta_{subplot \space [10,35)} * AGB_{subplot \space [10,35)} + AGB_{ [35,Inf)} \]</span></p>
+<p><span class="math display">\[ \beta_{subplot \space [10,35)} = \frac{area_{plot}}{area_{subplot \space [10,35)}}\]</span></p>
+<p>Further corrections to <em>AGB<sub>plot</sub></em> should be made to incorporate biomass from 5 to 10 cm DBH if we are to compare these results with results from Asner &amp; Mascaro (201X) which biomass estimations are for plots from trees measured from 5 cm DBH.</p>
+<p><br></p>
 </div>
-<div id="agb.we" class="section level4">
-<h4>AGB.we</h4>
-<p><img src="01_agb_files/figure-html/unnamed-chunk-14-4.png" width="672" /></p>
+<div id="agbd-acd" class="section level2" number="5.3">
+<h2 number="5.3"><span class="header-section-number">5.3</span> AGBD &amp; ACD</h2>
+<p>Above-Ground Biomass Density (AGBD) is biomass per unit of area [Mg/ha]:</p>
+<p><span class="math display">\[ AGBD = \frac{AGB_{plot}}{area_{plot}} \]</span></p>
+<p>For defining the area of the plot, we have two options:</p>
+<ol style="list-style-type: decimal">
+<li><p>using the nominal area of the plot (<em>e.g.</em>, 50m x 50m = 0.25ha)</p></li>
+<li><p>using the area calculated from the polygon shapefile.</p></li>
+</ol>
+<p>I used the nominal area in further calculations.</p>
+<p><em>TODO: add 1:1 plot of both areas</em></p>
+<p>Then, to get Above-ground Carbon Density (ACD), AGBD is multiplied by 0.48 (Martin &amp; Thomas, 2011) which is the carbon content [Mg<sub>C</sub>/ha].</p>
+<p><span class="math display">\[ ACD = 0.48 \times \left( \frac{AGB_{plot}}{area_{plot}}\right)  =  0.48 \times AGBD \]</span></p>
+<p><br></p>
 </div>
-</div>
-<div id="loess-compare" class="section level3">
-<h3>loess compare</h3>
-<p><em>Add the plot of loess lines…</em></p>
+<div id="acd-distribution" class="section level2 tabset" number="5.4">
+<h2 class="tabset" number="5.4"><span class="header-section-number">5.4</span> ACD distribution</h2>
+<div id="all-inventories-1" class="section level3 unnumbered">
+<h3 class="unnumbered">All inventories</h3>
 <p><img src="01_agb_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
 </div>
+<div id="paisus-1" class="section level3 unnumbered">
+<h3 class="unnumbered">PaiSus</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-15-2.png" width="672" /></p>
 </div>
-<div id="agb-by-plot-and-agbd" class="section level2">
-<h2>AGB by plot and AGBD</h2>
-<p>AGBp is the sum of AGB of all individual in the plot</p>
-<p>AGBD is AGBp divided by area: [MgC/ha]. Here we have some decisions to make: which area? I have the teorical area and the area from shapefiles. <em>add 1:1 plot of both</em></p>
-<p>ACD is AGBD multiplied by .48 (<em>NOTE: add ref</em>) which is the carbon content.</p>
+<div id="marvin-1" class="section level3 unnumbered">
+<h3 class="unnumbered">MarVin</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-15-3.png" width="672" /></p>
+</div>
+</div>
+<div id="error-propagation" class="section level2" number="5.5">
+<h2 number="5.5"><span class="header-section-number">5.5</span> Error propagation</h2>
+<p>Here the error from height estimation is different for palms and trees as these were separate models (<a href="#model-comparison">see above</a>). Best D-H model with less RSE for palms and trees was the <em>log2</em> method: RSE<sub>tree</sub> = <code>5.53</code> and RSE<sub>palm</sub> = <code>4.2</code>. For individuals with heights directly measured, a ‘RSE’ of 0.5 m was assigned.</p>
+<p>The <a href="#agbplot">expansion factor</a> from sub-plots is not accounted in error propagation here, therefore this needs further definition. However, here is the code to calculate it using the <code>BIOMASS</code> package:</p>
+<pre class="r"><code>## PROPAGATING ERRORS ----
+# Per plot using RSE 
+resultMC &lt;- AGBmonteCarlo(
+  D = INV$DBH, WD = INV$meanWD, errWD = INV$sdWD,
+  H = INV$height.L2, errH = INV$RSE.H.L2,
+  Dpropag = &quot;chave2004&quot;)
+
+Res &lt;- summaryByPlot(resultMC$AGB_simu, INV$parcela)
+Res &lt;- Res[order(Res$AGB), ]
+plot(Res$AGB*.48, pch = 20, xlab = &quot;Plots&quot;, ylab = &quot;ACD (Mg C/ha)&quot;, ylim = c(0, max(Res$Cred_97.5)*.48))
+segments(1:nrow(Res), Res$Cred_2.5*.48, 1:nrow(Res), Res$Cred_97.5*.48, col = &quot;red&quot;)</code></pre>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+</div>
+</div>
+<div id="basal-area-plot" class="section level1" number="6">
+<h1 number="6"><span class="header-section-number">6</span> Basal Area (plot)</h1>
+<div id="formulation" class="section level2" number="6.1">
+<h2 number="6.1"><span class="header-section-number">6.1</span> Formulation</h2>
+<p>Basal Area (BA) is the area occupied by stems in the plot. Assuming that all trees are circular, basal area for each individual is calculated with the classic formula of diameter-area relation in a circle:</p>
+<p><span class="math display">\[ BA_{ind} = \frac{\pi}{4}*DBH^2 \]</span></p>
+<p>Then, the BA of the plot (<em>BA<sub>plot</sub></em>) is the aggregation of all individual BA (<em>BA<sub>ind</sub></em>) divided by the plot area [m<sup>2</sup>/ha]:</p>
+<p><span class="math display">\[ BA_{plot} = \frac{\sum{BA_{ind}}}{area_{plot}}\]</span> Similar to AGB, to adjust the contribution of 10 to 35 cm DBH individuals in proportion of the sub-plot area, an expansion factor was applied to BA.</p>
+<p><span class="math display">\[ BA_{plot\space[10,35)} = \beta_{subplot \space [10,35)} * \frac{\sum{BA_{ind\space[10,35)}}}{area_{plot}} \]</span></p>
+<p><span class="math display">\[ \because\space \beta_{subplot \space [10,35)} = \frac{area_{plot}}{area_{subplot \space [10,35)}} \]</span></p>
+<p><span class="math display">\[ BA_{plot\space[10,35)} = \frac{ \sum{BA_{ind\space[10,35)}}} {area_{subplot \space [10,35)}} \]</span></p>
+<p>and, given the contribution of BA from individuals above 35 cm DBH:</p>
+<p><span class="math display">\[ BA_{plot\space[35,Inf)} = \frac{\sum{BA_{ind\space[35,Inf)}}}{area_{plot}} \]</span></p>
+<p>total Basal Area for a plot [m<sup>2</sup>/ha] is:</p>
+<p><span class="math display">\[ BA_{plot} = \frac{ \sum{BA_{ind\space[10,35)}}} {area_{subplot \space [10,35)}} + \frac{\sum{BA_{ind\space[35,Inf)}}}{area_{plot}} \]</span></p>
 <p><br></p>
 </div>
-<div id="some-figures-relating-agbd-with-something" class="section level2">
-<h2>Some figures relating AGBD with something…</h2>
-<p><em>Add some other descriptive figures &amp; tables.</em></p>
-<p><br></p>
+<div id="ba-distribution" class="section level2 tabset" number="6.2">
+<h2 class="tabset" number="6.2"><span class="header-section-number">6.2</span> BA distribution</h2>
+<div id="all-inventories-2" class="section level3 unnumbered">
+<h3 class="unnumbered">All inventories</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+</div>
+<div id="paisus-2" class="section level3 unnumbered">
+<h3 class="unnumbered">PaiSus</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-18-2.png" width="672" /></p>
+</div>
+<div id="marvin-2" class="section level3 unnumbered">
+<h3 class="unnumbered">MarVin</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-18-3.png" width="672" /></p>
 </div>
 </div>
-<div id="error-propagation" class="section level1">
-<h1>Error propagation</h1>
-<pre class="r"><code># Per plot using the local HD model constructed above (modelHD)
-resultMC.t &lt;- AGBmonteCarlo(
-  D = INV$DBH[INV$tree.type==&#39;O&#39;], WD = INV$meanWD[INV$tree.type==&#39;O&#39;], errWD = INV$sdWD[INV$tree.type==&#39;O&#39;],
-  HDmodel = HDmodel2.t, Dpropag = &quot;chave2004&quot;
-)
-resMC &lt;- summaryByPlot(resultMC.t$AGB_simu, INV$plotID[INV$tree.type==&#39;O&#39;])
-head(resMC)</code></pre>
+</div>
+<div id="wood-density-ρ-plot" class="section level1" number="7">
+<h1 number="7"><span class="header-section-number">7</span> Wood Density-ρ (plot)</h1>
+<div id="formulation-1" class="section level2" number="7.1">
+<h2 number="7.1"><span class="header-section-number">7.1</span> Formulation</h2>
+<p>ρ<sub>plot</sub> is the BA-weighted mean wood density of the plot:</p>
+<p><span class="math display">\[ \rho =  \frac {\sum {\left(BA_{ind} * WD_{ind} \right) }}{\sum{BA_{ind}}} \]</span></p>
+<p>Again, to account for the adjusted contribution of the 10-35cm DBH sub-plot individuals, I calculated the WD weighted mean separately for the ones with DBH above 35cm (ρ~plot [35,Inf)~) and for 10-35 cm DBH (ρ~subplot [10,35)~). Then I followed two approaches:</p>
+<ol style="list-style-type: decimal">
+<li>Calculated the mean value of both (<em>i.e.</em>, this gives the same weight to both).</li>
+</ol>
+<p><span class="math display">\[ \rho_{1} =  \frac {\rho_{subplot\space[10,35)} + \rho_{[35,Inf)}  }{2}  \]</span></p>
+<ol start="2" style="list-style-type: decimal">
+<li>Calculate a second weighted mean for both ρ, weighting them with their adjusted BA (<em>i.e.</em>, the whole plot area for the 35s and the sub-plot area for the 10-35s).</li>
+</ol>
+<p><span class="math display">\[ W_{[10,35)} = \beta_{subplot \space [10,35)} * \sum{BA_{ind\space[10,35)}}\]</span></p>
+<p><span class="math display">\[ W_{[35,Inf)} = \sum{BA_{ind\space[35,Inf)}}\]</span></p>
+<p>then,</p>
+<p><span class="math display">\[ \rho_{2} =  \frac {W_{[10,35)} * \rho_{subplot\space [10,35)} + W_{[35,Inf)} * \rho_{[35,Inf)}  }{W_{[10,35)} +W_{[35,Inf)}}  \]</span></p>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+</div>
+<div id="ba-distribution-1" class="section level2 tabset" number="7.2">
+<h2 class="tabset" number="7.2"><span class="header-section-number">7.2</span> BA distribution</h2>
+<div id="all-inventories-3" class="section level3 unnumbered">
+<h3 class="unnumbered">All inventories</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+</div>
+<div id="paisus-3" class="section level3 unnumbered">
+<h3 class="unnumbered">PaiSus</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-20-2.png" width="672" /></p>
+</div>
+<div id="marvin-3" class="section level3 unnumbered">
+<h3 class="unnumbered">MarVin</h3>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-20-3.png" width="672" /></p>
+</div>
+</div>
+</div>
+<div id="acd-ba-wd-relationships" class="section level1" number="8">
+<h1 number="8"><span class="header-section-number">8</span> ACD-BA-WD relationships</h1>
+<div id="acd-ba" class="section level2" number="8.1">
+<h2 number="8.1"><span class="header-section-number">8.1</span> ACD-BA</h2>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+</div>
+<div id="acd-wd" class="section level2" number="8.2">
+<h2 number="8.2"><span class="header-section-number">8.2</span> ACD-WD</h2>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+</div>
+<div id="ba-wd" class="section level2" number="8.3">
+<h2 number="8.3"><span class="header-section-number">8.3</span> BA-WD</h2>
+<p><img src="01_agb_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+</div>
 </div>
 
 
@@ -701,7 +816,7 @@ $(document).ready(function ()  {
 
     // establish options
     var options = {
-      selectors: "h1,h2,h3",
+      selectors: "h1,h2",
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {

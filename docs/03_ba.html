@@ -362,13 +362,10 @@ div.tocify {
   <a href="index.html">The project</a>
 </li>
 <li>
-  <a href="01_agb.html">AGB-inventories</a>
+  <a href="01_agb.html">Field: AGB, BA &amp; ρ</a>
 </li>
 <li>
   <a href="02_tch.html">TCH-lidar</a>
-</li>
-<li>
-  <a href="03_ba.html">BA &amp; ρ</a>
 </li>
 <li>
   <a href="04_env.html">Environ. Variables</a>
@@ -389,7 +386,6 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Basal Area &amp; Wood Density</h1>
-<h4 class="date">Last update 11/05/2021</h4>
 
 </div>
 
@@ -399,13 +395,70 @@ body {
 text-align: justify}
 </style>
 <p><br></p>
-<div id="basal-area-plot" class="section level1">
-<h1>Basal Area (plot)</h1>
-<p><br><br><br><br><br><br><br></p>
+<div id="basal-area-plot" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Basal Area (plot)</h1>
+<div id="formulation" class="section level2" number="1.1">
+<h2 number="1.1"><span class="header-section-number">1.1</span> Formulation</h2>
+<p>Basal Area (BA) is the area occupied by stems in the plot. Assuming that all trees are circular, basal area for each individual is calculated with the classic formula of diameter-area relation in a circle:</p>
+<p><span class="math display">\[ BA_{ind} = \frac{\pi}{4}*DBH^2 \]</span></p>
+<p>Then, the BA of the plot (<em>BA<sub>plot</sub></em>) is the aggregation of all individual BA (<em>BA<sub>ind</sub></em>) divided by the plot area [m<sup>2</sup>/ha]:</p>
+<p><span class="math display">\[ BA_{plot} = \frac{\sum{BA_{ind}}}{area_{plot}}\]</span> Similar to AGB, to adjust the contribution of 10 to 35 cm DBH individuals in proportion of the sub-plot area, an expansion factor was applied to BA.</p>
+<p><span class="math display">\[ BA_{plot\space[10,35)} = \beta_{subplot \space [10,35)} * \frac{\sum{BA_{ind\space[10,35)}}}{area_{plot}} \]</span></p>
+<p><span class="math display">\[ \because\space \beta_{subplot \space [10,35)} = \frac{area_{plot}}{area_{subplot \space [10,35)}} \]</span></p>
+<p><span class="math display">\[ BA_{plot\space[10,35)} = \frac{ \sum{BA_{ind\space[10,35)}}} {area_{subplot \space [10,35)}} \]</span></p>
+<p>and, given the contribution of BA from individuals above 35 cm DBH:</p>
+<p><span class="math display">\[ BA_{plot\space[35,Inf)} = \frac{\sum{BA_{ind\space[35,Inf)}}}{area_{plot}} \]</span></p>
+<p>total Basal Area for a plot [m<sup>2</sup>/ha] is:</p>
+<p><span class="math display">\[ BA_{plot} = \frac{ \sum{BA_{ind\space[10,35)}}} {area_{subplot \space [10,35)}} + \frac{\sum{BA_{ind\space[35,Inf)}}}{area_{plot}} \]</span></p>
+<p><br></p>
 </div>
-<div id="wood-density-plot" class="section level1">
-<h1>Wood Density (plot)</h1>
-<p>…</p>
+<div id="ba-distribution" class="section level2 tabset" number="1.2">
+<h2 class="tabset" number="1.2"><span class="header-section-number">1.2</span> BA distribution</h2>
+<div id="all-inventories" class="section level3 unnumbered">
+<h3 class="unnumbered">All inventories</h3>
+<p><img src="03_ba_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+</div>
+<div id="paisus" class="section level3 unnumbered">
+<h3 class="unnumbered">PaiSus</h3>
+<p><img src="03_ba_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
+</div>
+<div id="marvin" class="section level3 unnumbered">
+<h3 class="unnumbered">MarVin</h3>
+<p><img src="03_ba_files/figure-html/unnamed-chunk-3-3.png" width="672" /></p>
+</div>
+</div>
+</div>
+<div id="wood-density-plot" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Wood Density (plot)</h1>
+<p>ρ<sub>plot</sub> is the BA-weighted mean wood density of the plot:</p>
+<p><span class="math display">\[ \rho =  \frac {\sum {\left(BA_{ind} * WD_{ind} \right) }}{\sum{BA_{ind}}} \]</span></p>
+<p>Again, to account for the adjusted contribution of the 10-35cm DBH sub-plot individuals, I calculated the WD weighted mean separately for the ones with DBH above 35cm (ρ~plot [35,Inf)~) and for 10-35 cm DBH (ρ~subplot [10,35)~). Then I followed two approaches:</p>
+<ol style="list-style-type: decimal">
+<li>Calculated the mean value of both (<em>i.e.</em>, this gives the same weight to both).</li>
+</ol>
+<p><span class="math display">\[ \rho_{1} =  \frac {\rho_{subplot\space[10,35)} + \rho_{[35,Inf)}  }{2}  \]</span></p>
+<ol start="2" style="list-style-type: decimal">
+<li>Calculate a second weighted mean for both ρ, weighting them with their adjusted BA (<em>i.e.</em>, the whole plot area for the 35s and the sub-plot area for the 10-35s).</li>
+</ol>
+<p><span class="math display">\[ W_{[10,35)} = \beta_{subplot \space [10,35)} * \sum{BA_{ind\space[10,35)}}\]</span> <span class="math display">\[ W_{[35,Inf)} = \sum{BA_{ind\space[35,Inf)}}\]</span></p>
+<p>then,</p>
+<p><span class="math display">\[ \rho_{2} =  \frac {W_{[10,35)} * \rho_{subplot\space [10,35)} + W_{[35,Inf)} * \rho_{[35,Inf)}  }{W_{[10,35)} +W_{[35,Inf)}}  \]</span></p>
+<p><img src="03_ba_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<div id="ba-distribution-1" class="section level2 tabset" number="2.1">
+<h2 class="tabset" number="2.1"><span class="header-section-number">2.1</span> BA distribution</h2>
+<div id="all-inventories-1" class="section level3 unnumbered">
+<h3 class="unnumbered">All inventories</h3>
+<p><img src="03_ba_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+<div id="paisus-1" class="section level3 unnumbered">
+<h3 class="unnumbered">PaiSus</h3>
+<p><img src="03_ba_files/figure-html/unnamed-chunk-5-2.png" width="672" /></p>
+</div>
+<div id="marvin-1" class="section level3 unnumbered">
+<h3 class="unnumbered">MarVin</h3>
+<p><img src="03_ba_files/figure-html/unnamed-chunk-5-3.png" width="672" /></p>
+</div>
+</div>
 </div>
 
 
@@ -454,7 +507,7 @@ $(document).ready(function ()  {
 
     // establish options
     var options = {
-      selectors: "h1,h2,h3",
+      selectors: "h1,h2",
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {

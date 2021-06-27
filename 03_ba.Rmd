@@ -1,11 +1,16 @@
 ---
 title: "Basal Area & Wood Density"
-date: "Last update 11/05/2021"
 output: 
       html_document:
           toc: true
+          toc_depth: 2
           toc_float: true
 ---
+
+
+```{r echo=FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
 
 <style>
 body {
@@ -14,13 +19,156 @@ text-align: justify}
 
 <br>
 
+
+```{r echo=F, results='hide'}
+INV <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/all_inventories_v6_ba.csv')
+dbp <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v3_ba_wd.csv')
+```
+
 # Basal Area (plot)
 
-<br><br><br><br><br><br><br>
+## Formulation
+
+Basal Area (BA) is the area occupied by stems in the plot. Assuming that all trees are circular, basal area for each individual is calculated with the classic formula of diameter-area relation in a circle:
+
+$$ BA_{ind} = \frac{\pi}{4}*DBH^2 $$
+
+Then, the BA of the plot (*BA~plot~*) is the aggregation of all individual BA (*BA~ind~*) divided by the plot area [m^2^/ha]:
+
+$$ BA_{plot} = \frac{\sum{BA_{ind}}}{area_{plot}}$$
+Similar to AGB, to adjust the contribution of 10 to 35 cm DBH individuals in proportion of the sub-plot area, an expansion factor was applied to BA.
+
+$$ BA_{plot\space[10,35)} = \beta_{subplot \space [10,35)} * \frac{\sum{BA_{ind\space[10,35)}}}{area_{plot}} $$
+
+$$ \because\space \beta_{subplot \space [10,35)} = \frac{area_{plot}}{area_{subplot \space [10,35)}} $$
+
+
+
+$$ BA_{plot\space[10,35)} = \frac{ \sum{BA_{ind\space[10,35)}}} {area_{subplot \space [10,35)}} $$
+
+and, given the contribution of BA from individuals above 35 cm DBH:
+
+
+$$ BA_{plot\space[35,Inf)} = \frac{\sum{BA_{ind\space[35,Inf)}}}{area_{plot}} $$
+
+total Basal Area for a plot [m^2^/ha] is:
+
+
+$$ BA_{plot} = \frac{ \sum{BA_{ind\space[10,35)}}} {area_{subplot \space [10,35)}} + \frac{\sum{BA_{ind\space[35,Inf)}}}{area_{plot}} $$
+
+<br>
+
+
+## BA distribution{.tabset}
+
+```{r results='asis',echo=F}
+cat('###','All inventories{.unnumbered}',' \n')
+bks <- 1*0:(round(max(dbp$BAplot)/1)+1)
+dAll <- hist(dbp$BAplot, breaks = bks, plot = F)
+dPS <- hist(dbp$BAplot[INV$owner=='PaiSus'], breaks = bks, plot = F)
+dAC <- hist(dbp$BAplot[INV$owner=='MarVin'], breaks = bks, plot = F)
+
+x <- barplot(rbind(dPS$counts,dAC$counts), col=c('gold2','cyan3'), ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab=expression('Basal Area ' (m^2/ha)), ylab='Frequency', main= 'All')
+
+psxi <- x[1]-mean(diff(x))/2
+psxs <- (1:(length(bks)-1)*mean(diff(x)))
+psxc <- data.frame(bks,pos=c(psxi,psxi+psxs))
+psxp <- predict(lm(pos~bks, data = psxc), newdata =  data.frame(bks=pretty(bks)))
+
+axis(1,  psxp, pretty(bks), line=.2)
+legend('topright', legend = c('PaiSus','MarVin'), fill = c('gold2','cyan3'), bty='n', border = NA)
+cat(' \n \n')
+
+cat('###','PaiSus{.unnumbered}',' \n')
+barplot(dPS$counts, col='gold2', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab=expression('Basal Area ' (m^2/ha)), ylab='Frequency', main= 'PaiSus')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n')
+
+cat('###','MarVin{.unnumbered}',' \n')
+barplot(dAC$counts, col='cyan3', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab=expression('Basal Area ' (m^2/ha)), ylab='Frequency', main= 'MarVin')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n ')
+
+```
 
 
 # Wood Density (plot)
 
-...
+ρ~plot~ is the BA-weighted mean wood density of the plot: 
+
+$$ \rho =  \frac {\sum {\left(BA_{ind} * WD_{ind} \right) }}{\sum{BA_{ind}}} $$
+
+Again, to account for the adjusted contribution of the 10-35cm DBH sub-plot individuals, I calculated the WD weighted mean separately for the ones with DBH above 35cm (ρ~plot [35,Inf)~) and for 10-35 cm DBH (ρ~subplot [10,35)~). Then I followed two approaches:
+
+
+1. Calculated the mean value of both (*i.e.*, this gives the same weight to both).
+
+$$ \rho_{1} =  \frac {\rho_{subplot\space[10,35)} + \rho_{[35,Inf)}  }{2}  $$
+
+2. Calculate a second weighted mean for both ρ, weighting them with their adjusted BA (*i.e.*, the whole plot area for the 35s and the sub-plot area for the 10-35s).
+
+$$ W_{[10,35)} = \beta_{subplot \space [10,35)} * \sum{BA_{ind\space[10,35)}}$$
+$$ W_{[35,Inf)} = \sum{BA_{ind\space[35,Inf)}}$$
+
+  then,
+
+$$ \rho_{2} =  \frac {W_{[10,35)} * \rho_{subplot\space [10,35)} + W_{[35,Inf)} * \rho_{[35,Inf)}  }{W_{[10,35)} +W_{[35,Inf)}}  $$
+
+
+
+
+```{r echo=FALSE}
+
+plot(dbp$WDplot1,dbp$WDplot2, pch=20, col = densCols(dbp$WDplot1,dbp$WDplot2),
+     ylab=expression(ρ[2]~(g/cm^3)), xlab = expression(ρ[1]~(g/cm^3)))
+abline(a=0, b=1, col='red')
+
+
+```
+
+
+## BA distribution{.tabset}
+
+```{r results='asis',echo=F}
+cat('###','All inventories{.unnumbered}',' \n')
+bks <- 0:(round(max(dbp$WDplot2)*20))/20
+dAll <- hist(dbp$WDplot2, breaks = bks, plot = F)
+dPS <- hist(dbp$WDplot2[INV$owner=='PaiSus'], breaks = bks, plot = F)
+dAC <- hist(dbp$WDplot2[INV$owner=='MarVin'], breaks = bks, plot = F)
+
+x <- barplot(rbind(dPS$counts,dAC$counts), col=c('gold2','cyan3'), ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'All')
+psxi <- x[1]-mean(diff(x))/2
+psxs <- (1:(length(bks)-1)*mean(diff(x)))
+psxc <- data.frame(bks,pos=c(psxi,psxi+psxs)) 
+psxp <- predict(lm(pos~bks, data = psxc), newdata =  data.frame(bks=pretty(bks)))  
+
+axis(1,  psxp, pretty(bks), line=.2)
+legend('topright', legend = c('PaiSus','MarVin'), fill = c('gold2','cyan3'), bty='n', border = NA)
+cat(' \n \n')
+
+cat('###','PaiSus{.unnumbered}',' \n')
+barplot(dPS$counts, col='gold2', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'PaiSus')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n')
+
+cat('###','MarVin{.unnumbered}',' \n')
+barplot(dAC$counts, col='cyan3', ylim = range(dAll$counts)*1.1,
+        las=2, cex.names=.8, border=NA,
+        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'MarVin')
+axis(1,  psxp, pretty(bks), line=.2)
+cat(' \n \n ')
+
+```
+
 
 

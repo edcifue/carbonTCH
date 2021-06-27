@@ -1,11 +1,16 @@
 ---
 title: "Models"
-date: "Last update 11/05/2021"
 output: 
       html_document:
           toc: true
+          toc_depth: 2
           toc_float: true
 ---
+
+
+```{r echo=FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
 
 <style>
 body {
@@ -14,8 +19,78 @@ text-align: justify}
 
 <br>
 
-# TCH lidar
+# Lidar data
+We have lidar data from Paisagens Sustentáveis (**PaiSus**), Marcus Vinicio Neves d'Oliveira (**MarVin**), Estimativa de biomassa na Amazônia (**EBA**). From Sassan Saatchi we have 1-m resolution CHMs for lidar flights in Chocó, Colombia.
 
-...
+Not all lidar transects have matching field inventories, therefore, I only processed lidar data with associated inventories.
+
+***TODO:*** *Add map and/or list.*
+
+<br>
+
+# Canopy Height Models
+
+LAStools were used to compute Canopy Height Models (CHM). First, point clouds had ground points classified, then height was normalised and a pit-free surface algorithm was applied to obtain a CHM of 1-m resolution. 
+
+Scripts and pipelines were written in R, using the function `system()` to call LAStools. Since LAStools are Windows binaries, I used Wine software [**TODO:** *add link*] to run them under macOS Mojave (**TODO:** *add Wiki*).
+
+## Ground & Height (point cloud)
+I followed this blog: [Rasterizing Perfect Canopy Height Models from LiDAR](https://rapidlasso.com/2014/11/04/rasterizing-perfect-canopy-height-models-from-lidar/)
+
+Ground points were classified using `lasground` and then height was normalised using `lasheight` dropping values above 80m as we know trees in these areas won't be that tall and we can filter out *e.g.* points sampling birds flying.
+
+```{r }
+
+las.input <- "./raw/ANA_A01_2017_laz/*.la{z,s}"
+hnorm.dir <- "./hnorm/ANA_A01_2017_laz"
+
+callground1 <- paste(
+  'wine', '~/LAStools/bin/lasground_new',
+  '-i', las.input,
+  '-wilderness',
+  '-odix _ground',
+  '-olaz -odir', hnorm.dir
+  )
+```
+
+We paste all arguments and flags into a text string and then run it through the ```system()``` function:
+
+```{r, eval=FALSE}
+system(callground1)
+```
+
+It will eventually call this command into the shell Terminal: 
+
+````
+`r paste('$',callground1)`
+````
+
+
+```{bash eval=F}
+$ wine ~/LAStools/bin/lasground_new -i ./raw/ANA_A01_2017_laz/*.la{z,s} -wilderness -odix _ground -olaz -odir ./hnorm/ANA_A01_2017_laz
+```
+
+
+## CHM computation
+
+### Average pulse spacing
+
+parameters-- grid, subcircle, 
+
+
+# Top-of-the-Canopy Height
+
+## TCH plots
+
+
+# Cover 10
+
+
+
+
+
+
+
+
 
 

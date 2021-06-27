@@ -362,13 +362,10 @@ div.tocify {
   <a href="index.html">The project</a>
 </li>
 <li>
-  <a href="01_agb.html">AGB-inventories</a>
+  <a href="01_agb.html">Field: AGB, BA &amp; ρ</a>
 </li>
 <li>
   <a href="02_tch.html">TCH-lidar</a>
-</li>
-<li>
-  <a href="03_ba.html">BA &amp; ρ</a>
 </li>
 <li>
   <a href="04_env.html">Environ. Variables</a>
@@ -389,7 +386,6 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Models</h1>
-<h4 class="date">Last update 11/05/2021</h4>
 
 </div>
 
@@ -400,8 +396,26 @@ text-align: justify}
 </style>
 <p><br></p>
 <p>I’m learning Maximum Likelihood Estimation…</p>
-<div id="davids-comment" class="section level1">
-<h1>David’s comment:</h1>
+<div id="overview" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> overview</h1>
+</div>
+<div id="descriptives-distribution-of-data" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Descriptives, distribution of data</h1>
+</div>
+<div id="basic-model" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> Basic Model</h1>
+<div id="agb-atchb" class="section level2" number="3.1">
+<h2 number="3.1"><span class="header-section-number">3.1</span> AGB ~ a·TCH<sup>b</sup></h2>
+</div>
+<div id="agb-atchbbac" class="section level2" number="3.2">
+<h2 number="3.2"><span class="header-section-number">3.2</span> AGB ~ a·TCH<sup>b</sup>·BA<sup>c</sup></h2>
+</div>
+<div id="agb-atchbbacρd" class="section level2" number="3.3">
+<h2 number="3.3"><span class="header-section-number">3.3</span> AGB ~ a·TCH<sup>b</sup>·BA<sup>c</sup>·ρ<sup>d</sup></h2>
+</div>
+</div>
+<div id="davids-comment" class="section level1" number="4">
+<h1 number="4"><span class="header-section-number">4</span> David’s comment:</h1>
 <p><span class="math display">\[ACD \sim  a· TCH^b\]</span></p>
 <p>Nls or LSR of log-log transformed data. Making a and b a functional of environmental information (e.g TPI — topographic position index)</p>
 <p><span class="math display">\[ACD \sim  a · wood density · TCH^b  + e \]</span></p>
@@ -413,8 +427,8 @@ text-align: justify}
 <p><span class="math display">\[ACD \sim  a·(1+a1·TPI + a2·rainfall) · Wood\ Density · TCH^b·(1+ b1·TPI + b2·rainfall)  + e\]</span> <span class="math display">\[e ~ N(0,sigma + sigma1·TCH)\]</span></p>
 <p><br></p>
 </div>
-<div id="edgars-first-attempt" class="section level1">
-<h1>Edgar’s first attempt</h1>
+<div id="edgars-first-attempt" class="section level1" number="5">
+<h1 number="5"><span class="header-section-number">5</span> Edgar’s first attempt</h1>
 <p>I have some questions: - how to define the error structure? - What is the proper way to assign “priors”? - Which other MLE methods are appropriate? - etc…</p>
 <pre class="r"><code># load libraries
 library(bbmle)
@@ -476,8 +490,8 @@ bias(Coeffs$obs, Coeffs$pred)
 R2(Coeffs$obs, Coeffs$pred)</code></pre>
 <p><br></p>
 </div>
-<div id="davidsacha-mle-reference-code" class="section level1">
-<h1>David/Sacha MLE reference code</h1>
+<div id="davidsacha-mle-reference-code" class="section level1" number="6">
+<h1 number="6"><span class="header-section-number">6</span> David/Sacha MLE reference code</h1>
 <p>Here is the code for maximum likelihood estimation from David/Sacha:</p>
 <pre class="r"><code># David Coomes August 2021, analyses of Sacha&#39;s data
 
@@ -601,7 +615,7 @@ $(document).ready(function ()  {
 
     // establish options
     var options = {
-      selectors: "h1,h2,h3",
+      selectors: "h1,h2",
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {
