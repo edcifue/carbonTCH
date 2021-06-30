@@ -9,7 +9,7 @@ output:
 
 
 ```{r echo=FALSE}
-knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(cache = T)
 ```
 
 <style>
@@ -21,7 +21,7 @@ text-align: justify}
 
 # Background
 
-In order to calculate Above-ground biomass (AGB) from field inventories, allometric ecuations are used. In this case, we applied Chave et al. (2014) Eq. 4:
+To calculate Above-ground biomass (AGB) from field inventories, we applied Chave et al. (2014) Eq. 4:
 
 $$AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}$$
 which relates [AGB](#agbacd-estimation) with [Wood Density](#wood-density) ($WD$), stem [Diameter](#dbh) ($D$ *aka* $DBH$) and [Height](#height) ($H$) of each tree.
@@ -35,7 +35,7 @@ dbp <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/db_parcela_v1
 
 # Wood Density
 
-Wood Density (WD) was acquired from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the ```BIOMASS``` package in R.
+Wood Density (WD) was retrieved from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the ```BIOMASS``` package in R.
 
 When WD for a species was not found, the mean WD of the genus was allocated. If an individual was not identified to genus, then the mean of the WD of the plot was selected.
 

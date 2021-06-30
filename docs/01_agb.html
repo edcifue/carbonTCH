@@ -365,7 +365,7 @@ div.tocify {
   <a href="01_agb.html">Field: AGB, BA &amp; ρ</a>
 </li>
 <li>
-  <a href="02_tch.html">TCH-lidar</a>
+  <a href="02_tch.html">Lidar: TCH &amp; gap-cover</a>
 </li>
 <li>
   <a href="04_env.html">Environ. Variables</a>
@@ -397,13 +397,13 @@ text-align: justify}
 <p><br></p>
 <div id="background" class="section level1" number="1">
 <h1 number="1"><span class="header-section-number">1</span> Background</h1>
-<p>In order to calculate Above-ground biomass (AGB) from field inventories, allometric ecuations are used. In this case, we applied Chave et al. (2014) Eq. 4:</p>
+<p>To calculate Above-ground biomass (AGB) from field inventories, we applied Chave et al. (2014) Eq. 4:</p>
 <p><span class="math display">\[AGB = 0.0673 · \Big( WD ·  H · D^2\Big)^{0.976}\]</span> which relates <a href="#agbacd-estimation">AGB</a> with <a href="#wood-density">Wood Density</a> (<span class="math inline">\(WD\)</span>), stem <a href="#dbh">Diameter</a> (<span class="math inline">\(D\)</span> <em>aka</em> <span class="math inline">\(DBH\)</span>) and <a href="#height">Height</a> (<span class="math inline">\(H\)</span>) of each tree.</p>
 <p><br></p>
 </div>
 <div id="wood-density" class="section level1" number="2">
 <h1 number="2"><span class="header-section-number">2</span> Wood Density</h1>
-<p>Wood Density (WD) was acquired from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the <code>BIOMASS</code> package in R.</p>
+<p>Wood Density (WD) was retrieved from the global wood density database (Chave et al. 2009, Zanne et al. 2009) using the <code>BIOMASS</code> package in R.</p>
 <p>When WD for a species was not found, the mean WD of the genus was allocated. If an individual was not identified to genus, then the mean of the WD of the plot was selected.</p>
 <pre><code>##         
 ##          species genus  plot

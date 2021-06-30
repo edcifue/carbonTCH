@@ -7,7 +7,7 @@ navbar:
       href: index.html
     - text: "Field: AGB, BA & ρ"
       href: 01_agb.html
-    - text: "TCH-lidar"
+    - text: "Lidar: TCH & gap-cover"
       href: 02_tch.html
     # - text: "BA & ρ"
     #   href: 03_ba.html

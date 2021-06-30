@@ -2,3 +2,11 @@
 .Rhistory
 .RData
 .Ruserdata
+01_agb_cache/**
+01_agb_files/**
+02_tch_cache/**
+03_ba_cache/**
+03_ba_files/**
+05_models_cache/**
+index_cache/**
+images/**
