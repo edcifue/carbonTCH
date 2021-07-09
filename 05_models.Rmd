@@ -19,32 +19,718 @@ text-align: justify}
 
 <br>
 
-I'm learning Maximum Likelihood Estimation...
-
-# overview 
 
 
-# Descriptives, distribution of data
+# Overview 
+
+Models ...
+
+
+$$ ACD = a·TCH^b·BA^c·ρ^d $$
+
+$$ \ln \left(ACD\right) = \ln \left(a·TCH^b·BA^c·ρ^d\right) $$
+
+
+$$ \because\space\space \ln \left(A\times B\right) = \ln A + \ln B  \space\space \text{&} \space\space \ln \left(C^d\right) = d·\ln C $$
+
+$$ \ln \left(ACD\right) = \ln \left(a\right) + b·\ln \left(TCH\right) + c·\ln \left(BA\right) + d·\ln \left(ρ\right) $$
+
+# Descriptive figures...
+
+```{r echo=FALSE, message=FALSE, results='hide'}
+# load libraries
+library(bbmle)
+
+#functions
+RMSE<-function(Obs,Pred){
+  sqrt(mean((Obs-Pred)^2) ) / mean(Obs) *100 }
+bias<-function(Obs,Pred){
+  mean(Pred-Obs)/mean(Obs)*100 }
+R2 <-function(Obs,Pred){ 1 - sum((Obs-Pred)^2) / sum((Obs-mean(Obs))^2) }
+
+# load data
+library(sf)
+dbpp <- st_read('~/Rproj/07_carbon_br/data/inventories/plots_clean/shapes/db_parcela_shp/db_parcela_sp_v2_tch/dbpp_v2.shp')
+names(dbpp) <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/shapes/db_parcela_shp/db_parcela_sp_v2_tch/dbpp_v2_varnames.csv')[,1]
+
+XXX <- st_drop_geometry(dbpp)
+names(XXX)
+Y <- XXX[, c("ACD", "TCHmean","WDplot2", "BAplot","cover10")]
+
+library(plotly)
+```
+
+## ACD{.tabset}
+
+These are interactive figures so you can identify a point and you can go to the end of the TCH tab to see the rendered CHM (
+<a href="02_tch.html#5_CHM_by_plot" target="_blank">link</a>
+).
+
+
+### ACD ~ TCHmean{.unnumbered}
+
+```{r, echo=FALSE, message=FALSE}
+
+fig <- plot_ly(XXX, x = ~TCHmean, y = ~ACD, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>plotID: ', paste(location,plotID),
+                      '</br>year: ', year)) %>%
+  layout(xaxis = list(title = "mean TCH (m)"),
+         yaxis = list(title = "ACD (Mg<sub>C</sub> ha<sup>-1</sup>)"))
+fig
+```
+
+
+### ACD ~ BA{.unnumbered}
+
+```{r, echo=FALSE}
+
+fig <- plot_ly(XXX, x = ~BAplot, y = ~ACD, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>plotID: ', paste(location,plotID),
+                      '</br>year: ', year)) %>%
+  layout(xaxis = list(title = "Basal Area (m<sup>2</sup> ha<sup>-1</sup>)"), 
+         yaxis = list(title = "ACD (Mg<sub>C</sub> ha<sup>-1</sup>)"))
+fig
+```
 
 
 
-# Basic Model 
+### ACD ~ ρ{.unnumbered}
 
-## AGB ~ a·TCH^b^
+```{r, echo=FALSE}
+
+fig <- plot_ly(XXX, x = ~WDplot2, y = ~ACD, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>plotID: ', paste(location,plotID),
+                      '</br>year: ', year)) %>%
+  layout(xaxis = list(title = "ρ<sub>2</sub> (g cm<sup>-3</sup>)"),
+         yaxis = list(title = "ACD (Mg<sub>C</sub> ha<sup>-1</sup>)"))
+fig
+```
 
 
 
-## AGB ~ a·TCH^b^·BA^c^
+## BA & cover~10~{.tabset }
+
+These are interactive figures so you can identify a point and you can go to the end of the TCH tab to see the rendered CHM (
+<a href="02_tch.html#5_CHM_by_plot" target="_blank">link</a>
+).
+
+### BA ~ TCH{.unnumbered}
+
+```{r, echo=FALSE}
+
+fig <- plot_ly(XXX, x = ~TCHmean, y = ~BAplot, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>plotID: ', paste(location,plotID),
+                      '</br>year: ', year,
+                      '</br>ACD: ', round(ACD,1))) %>%
+  layout(xaxis = list(title = "mean TCH (m)"),
+         yaxis = list(title = "Basal Area (m<sup>2</sup> ha<sup>-1</sup>)"))
+fig
+```
+
+
+### ln(BA) ~ ln(TCH){.unnumbered}
+
+```{r, echo=FALSE}
+
+fig <- plot_ly(XXX, x = ~log(TCHmean), y = ~log(BAplot), type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>plotID: ', paste(location,plotID),
+                      '</br>year: ', year,
+                      '</br>ACD: ', round(ACD,1))) %>%
+  layout(xaxis = list(title = "log-mean TCH (m)"),
+         yaxis = list(title = "log-Basal Area (m<sup>2</sup> ha<sup>-1</sup>)"))
+fig
+```
+
+
+### BA ~ Cover~10~{.unnumbered}
+
+```{r, echo=FALSE}
+
+fig <- plot_ly(XXX, x = ~cover10, y = ~BAplot, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>plotID: ', paste(location,plotID),
+                      '</br>year: ', year,
+                      '</br>ACD: ', ACD)) %>%
+  layout(xaxis = list(title = "Cover<sub>10</sup> (proportion)"),
+         yaxis = list(title = "Basal Area (m<sup>2</sup> ha<sup>-1</sup>)"))
+fig
+```
+
+### BA ~ TCH $\times$ Cover~10~{.unnumbered}
+
+```{r, echo=FALSE}
+
+fig <- plot_ly(XXX, x = ~TCHmean*cover10, y = ~BAplot, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>plotID: ', paste(location,plotID),
+                      '</br>year: ', year,
+                      '</br>ACD: ', ACD)) %>%
+  layout(xaxis = list(title = "Cover<sub>10</sup> x mean TCH (m)"),
+         yaxis = list(title = "Basal Area (m<sup>2</sup> ha<sup>-1</sup>)"))
+
+fig
+```
+
+
+### ln(BA) ~ ln(TCH $\times$ Cover~10~){.unnumbered}
+
+```{r, echo=FALSE}
+
+fig <- plot_ly(XXX, x = ~log(TCHmean*cover10), y = ~log(BAplot), type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>plotID: ', paste(location,plotID),
+                      '</br>year: ', year,
+                      '</br>ACD: ', ACD)) %>%
+  layout(xaxis = list(title = "log-Cover<sub>10</sup> x mean TCH (m)"),
+         yaxis = list(title = "log-Basal Area (m<sup>2</sup> ha<sup>-1</sup>)"))
+
+fig
+```
 
 
 
-## AGB ~ a·TCH^b^·BA^c^·ρ^d^
+# ACD Models 
+
+## $ACD \sim a·TCH^b${.tabset .unnumbered}
+
+$$ACD \sim a·TCH^b$$
+
+### NLS{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(nls(ACD ~ a*TCHmean^b, data = Y,
+    start=list(a=1, b=1),
+    trace=TRUE))
+```
+
+<br><br>
+
+### MLE{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## model of TCH influence on AGB
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, sigma, sigma1) {
+    with(Y[-i,],
+         {
+           R = ACD - (a*TCHmean^b)
+           R = suppressWarnings(dnorm(R, 0, sigma + sigma1*TCHmean, log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma = 10, sigma1 =.00001), method = "L-BFGS-B",
+               lower = c(-Inf, -Inf, 0.0000001, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = Y$ACD[i]
+  Coeffs$pred[i] = fit1@coef[1] * Y$TCHmean[i]^fit1@coef[2]
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+  Coeffs$sigma1[i] = fit1@coef[4]
+}
+
+print(LL);print(LL);summary(fit1)
+plot(Coeffs$obs, Coeffs$pred, col = rgb(0,0,1,.3), pch=20)
+abline(a=0, b=1)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
+```
+
+<br><br>
+
+## $ACD \sim a·TCH^b·ρ^d${.tabset .unnumbered}
+
+$$AGB \sim a·TCH^b·ρ^d$$
+Coefficient *d* should be equal to 1 as DAC said. ***To-Do:*** **find proper reference**
+
+$$AGB \sim a·TCH^b·ρ$$
+
+### NLS{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(nls(ACD ~ a*TCHmean^b*WDplot2, data = Y,
+    start=list(a=1, b=1),
+    trace=TRUE))
+```
+
+<br><br>
+
+### MLE{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## model of TCH influence on AGB
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, sigma, sigma1) {
+    with(Y[-i,],
+         {
+           R = ACD - (WDplot2*a*(TCHmean^b))
+           R = suppressWarnings(dnorm(R, 0, sigma + sigma1*TCHmean, log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma = 10, sigma1 =.00001), method = "L-BFGS-B",
+               lower = c(-Inf, -Inf, 0.0000001, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = Y$ACD[i]
+  Coeffs$pred[i] = Y$WDplot2 * fit1@coef[1] * Y$TCHmean[i]^fit1@coef[2]
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+  Coeffs$sigma1[i] = fit1@coef[4]
+}
+
+print(LL);summary(fit1)
+plot(Coeffs$obs, Coeffs$pred, col = rgb(0,0,1,.3), pch=20)
+abline(a=0, b=1)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
+```
+
+<br><br>
+
+## $ACD \sim a·TCH^b·BA^c·ρ^d${.tabset .unnumbered}
+
+$$ACD \sim a·TCH^b·BA_{TCH}^c·ρ$$
+I need to predict BA first
+
+### NLS{.unnumbered}
+
+<br><br>
+
+### LM{.unnumbered}
+
+<br><br>
+
+### MLE{.unnumbered}
+
+<br><br>
+
+
+
+## $\ln(ACD) \sim a + b·\ln(TCH)${.tabset .unnumbered}
+
+$$\ln(ACD) \sim \ln(a) + b·\ln(TCH)$$
+
+### LM{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(lm(log(ACD) ~ log(TCHmean), data = Y))
+```
+
+<br><br>
+
+### NLS{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(nls(log(ACD) ~ a + b*log(TCHmean), data = Y,
+    start=list(a=1, b=1),
+    trace=TRUE))
+```
+
+<br><br>
+
+### MLE{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## model of TCH influence on AGB
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, sigma, sigma1) {
+    with(Y[-i,],
+         {
+           R = log(ACD) - (a+b*log(TCHmean))
+           R = suppressWarnings(dnorm(R, 0, sigma + sigma1*log(TCHmean), log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma = 10, sigma1 =.00001), method = "L-BFGS-B",
+               lower = c(0.0000001, 0.0000001, 0.0000001, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = log(Y$ACD[i])
+  Coeffs$pred[i] = fit1@coef[1] + fit1@coef[2]*log(Y$TCHmean[i])
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+  Coeffs$sigma1[i] = fit1@coef[4]
+}
+
+print(LL);print(LL);summary(fit1)
+plot(Coeffs$obs, Coeffs$pred, col = rgb(0,0,1,.3), pch=20)
+abline(a=0, b=1)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
+```
+
+<br><br>
+
+## $\ln(ACD) \sim a + b·\ln(TCH) + d·\ln(ρ)${.tabset .unnumbered}
+
+$$\ln(ACD) \sim \ln(a) + b·\ln(TCH) + d·\ln(ρ)$$
+
+Coefficient *d* should be equal to 1 as DAC said. ***To-Do:*** **find proper reference**
+
+$$\ln(ACD) \sim \ln(a) + b·\ln(TCH) + \ln(ρ)$$
+
+### LM{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(lm(log(ACD) ~ log(TCHmean) + offset(log(WDplot2)), data = Y))
+```
+
+<br><br>
+
+### NLS{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(nls(log(ACD) ~ a + b*log(TCHmean) + log(WDplot2), data = Y,
+    start=list(a=1, b=1),
+    trace=TRUE))
+```
+
+<br><br>
+
+### MLE{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## model of TCH influence on AGB
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, sigma, sigma1) {
+    with(Y[-i,],
+         {
+           R = log(ACD) - (a+b*log(TCHmean)+log(WDplot2))
+           R = suppressWarnings(dnorm(R, 0, sigma + sigma1*log(TCHmean), log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma = 10, sigma1 =.00001), method = "L-BFGS-B",
+               lower = c(0.0000001, 0.0000001, 0.0000001, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = log(Y$ACD[i])
+  Coeffs$pred[i] = fit1@coef[1] + fit1@coef[2]*log(Y$TCHmean[i]) + log(Y$WDplot2[i])
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+  Coeffs$sigma1[i] = fit1@coef[4]
+}
+
+print(LL);summary(fit1)
+plot(Coeffs$obs, Coeffs$pred, col = rgb(0,0,1,.3), pch=20)
+abline(a=0, b=1)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
+```
+
+<br><br>
+
+## $\ln(ACD) \sim a + b·\ln(TCH) + c·\ln(BA)+ d·\ln(ρ)${.tabset .unnumbered}
+
+$$\ln(ACD) \sim \ln(a) + b·\ln(TCH) + c·\ln(BA)+ \ln(ρ)$$
+
+I need to predict BA first
+
+### NLS{.unnumbered}
+
+<br><br>
+
+### LM{.unnumbered}
+
+<br><br>
+
+### MLE{.unnumbered}
+
+<br><br>
 
 
 
 
+# BA Models 
 
-# David's comment:
+## $BA \sim TCH${.tabset .unnumbered}
+
+$$BA \sim TCH$$
+
+### LM{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(lm(BAplot ~ TCHmean, data = Y))
+```
+
+<br><br>
+
+### NLS{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(nls(BAplot ~ a+b*TCHmean, data = Y,
+    start=list(a=1, b=1),
+    trace=TRUE))
+```
+
+<br><br>
+
+### MLE{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## model of TCH influence on AGB
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, sigma, sigma1) {
+    with(Y[-i,],
+         {
+           R = BAplot - (a+b*TCHmean)
+           R = suppressWarnings(dnorm(R, 0, sigma + sigma1*TCHmean, log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma = 1, sigma1 =.00001), method = "L-BFGS-B",
+               lower = c(-Inf, -Inf, 0.0000001, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = Y$BAplot[i]
+  Coeffs$pred[i] = fit1@coef[1] + fit1@coef[2] * Y$TCHmean[i]
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+  Coeffs$sigma1[i] = fit1@coef[4]
+}
+
+print(LL);summary(fit1)
+plot(Coeffs$obs, Coeffs$pred, col = rgb(0,0,1,.3), pch=20)
+abline(a=0, b=1)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
+```
+
+<br><br>
+
+
+## $BA \sim TCH \times Cover_{10}${.tabset .unnumbered}
+
+$$BA \sim TCH \times cover_{10}$$
+
+### LM{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(lm(BAplot ~ I(TCHmean*cover10), data = Y))
+```
+
+<br><br>
+
+### NLS{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(nls(BAplot ~ a+b*TCHmean*cover10, data = Y,
+    start=list(a=1, b=1),
+    trace=TRUE))
+```
+
+<br><br>
+
+### MLE{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## model of TCH influence on AGB
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, sigma, sigma1) {
+    with(Y[-i,],
+         {
+           R = BAplot - (a+b*TCHmean*cover10)
+           R = suppressWarnings(dnorm(R, 0, sigma + sigma1*TCHmean, log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma = 1, sigma1 =.00001), method = "L-BFGS-B",
+               lower = c(-Inf, -Inf, 0.0000001, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = Y$BAplot[i]
+  Coeffs$pred[i] = fit1@coef[1] + fit1@coef[2] * Y$TCHmean[i] * Y$cover10[i]
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+  Coeffs$sigma1[i] = fit1@coef[4]
+}
+
+print(LL);summary(fit1)
+plot(Coeffs$obs, Coeffs$pred, col = rgb(0,0,1,.3), pch=20)
+abline(a=0, b=1)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
+```
+
+<br><br>
+
+## $\ln(BA) \sim \ln(TCH)${.tabset .unnumbered}
+
+$$\ln(BA) \sim \ln(TCH)$$
+
+### LM{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(lm(log(BAplot) ~ log(TCHmean), data = Y))
+```
+
+<br><br>
+
+### NLS{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(nls(log(BAplot) ~ a+b*log(TCHmean), data = Y,
+    start=list(a=1, b=1),
+    trace=TRUE))
+```
+
+<br><br>
+
+### MLE{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## model of TCH influence on AGB
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, sigma, sigma1) {
+    with(Y[-i,],
+         {
+           R = log(BAplot) - (a+b*log(TCHmean))
+           R = suppressWarnings(dnorm(R, 0, sigma + sigma1*log(TCHmean), log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma = 1, sigma1 =.00001), method = "L-BFGS-B",
+               lower = c(-Inf, -Inf, 0.0000001, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = log(Y$BAplot[i])
+  Coeffs$pred[i] = fit1@coef[1] + fit1@coef[2] * log(Y$TCHmean[i])
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+  Coeffs$sigma1[i] = fit1@coef[4]
+}
+
+print(LL);summary(fit1)
+plot(Coeffs$obs, Coeffs$pred, col = rgb(0,0,1,.3), pch=20)
+abline(a=0, b=1)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
+```
+
+<br><br>
+
+## $\ln(BA) \sim \ln(TCH\times Cover_{10})${.tabset .unnumbered}
+
+$$\ln(BA) \sim \ln(TCH\times Cover_{10})$$
+
+### LM{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(lm(log(BAplot) ~ log(I(TCHmean*cover10)), data = Y))
+```
+
+<br><br>
+
+### NLS{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(nls(log(BAplot) ~ a+b*log(TCHmean*cover10), data = Y,
+    start=list(a=1, b=1),
+    trace=TRUE))
+```
+
+<br><br>
+
+### MLE{.unnumbered}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## model of TCH influence on AGB
+n = nrow(Y)
+Coeffs = data.frame(pred = rep(NA,n), obs = rep(NA,n), a = rep(NA,n),b = rep(NA,n), sigma = rep(NA,n), sigma1 = rep(NA,n) )
+
+for (i in 1:nrow(Y)) {
+  # this is leave-one-out regression, where you fit to all data but one and then predict that point to get R2 of observed vs predicted
+  
+  ## this log-likehihood function takes a bit to get your head round.
+  LL <- function(a, b, sigma, sigma1) {
+    with(Y[-i,],
+         {
+           R = log(BAplot) - (a+b*log(TCHmean*cover10))
+           R = suppressWarnings(dnorm(R, 0, sigma + sigma1*log(TCHmean), log = TRUE))
+           -sum(R) })}
+  # this uses maximum likelihood estimation to find the parameters that minimise log likehood = maximise likelihood
+  fit1 <- mle2(LL, start = list(a = 1, b =1, sigma = 1, sigma1 =.00001), method = "L-BFGS-B",
+               lower = c(-Inf, -Inf, 0.0000001, 0.0000001), hessian =TRUE,
+               upper = c(Inf, Inf, Inf, Inf))
+  Coeffs$obs[i] = log(Y$BAplot[i])
+  Coeffs$pred[i] = fit1@coef[1] + fit1@coef[2] * log(Y$TCHmean[i]*Y$cover10[i])
+  Coeffs$a[i] = fit1@coef[1]
+  Coeffs$b[i] = fit1@coef[2]
+  Coeffs$sigma[i] = fit1@coef[3]
+  Coeffs$sigma1[i] = fit1@coef[4]
+}
+
+print(LL);summary(fit1)
+plot(Coeffs$obs, Coeffs$pred, col = rgb(0,0,1,.3), pch=20)
+abline(a=0, b=1)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
+```
+
+<br><br>
+
+
+# Archive
+
+
+## David's comment:
 
 $$ACD \sim  a· TCH^b$$
 
@@ -71,14 +757,7 @@ $$e ~ N(0,sigma + sigma1·TCH)$$
 <br>
 
 
-
-# Edgar's first attempt
-
-I have some questions: 
-- how to define the error structure? 
-- What is the proper way to assign "priors"?
-- Which other MLE methods are appropriate?
-- etc...
+## Edgar's first attempts
 
 ```{r eval=FALSE}
 # load libraries
@@ -136,16 +815,16 @@ for (i in 1:nrow(Y)) {
 summary(fit1)
 plot(Coeffs$obs, Coeffs$pred)
 abline(a=1, b=0)
-RMSE(Coeffs$obs, Coeffs$pred)
-bias(Coeffs$obs, Coeffs$pred)
-R2(Coeffs$obs, Coeffs$pred)
+cat('RMSE = ',round(RMSE(Coeffs$obs, Coeffs$pred),2))
+cat('bias = ',round(bias(Coeffs$obs, Coeffs$pred),2))
+cat('R2 = ',round(R2(Coeffs$obs, Coeffs$pred),4))
 
 
 ```
 
 <br>
 
-# David/Sacha MLE reference code
+## David/Sacha MLE reference code
 
 Here is the code for maximum likelihood estimation from David/Sacha:
 

@@ -1,10 +1,11 @@
 ---
-title: "TCH & Gap-Cover"
+title: "TCH & Cover~10~"
 output: 
       html_document:
           toc: true
           toc_depth: 2
           toc_float: true
+          code_folding: hide
 ---
 
 
@@ -20,9 +21,15 @@ text-align: justify}
 <br>
 
 # Lidar data
-We have lidar data from Paisagens Sustentáveis (**PaiSus**), Marcus Vinicio Neves d'Oliveira (**MarVin**), Estimativa de biomassa na Amazônia (**EBA**). From Sassan Saatchi we have 1-m resolution CHMs for lidar flights in Chocó, Colombia.
+We have lidar data from Paisagens Sustentáveis (
+<a href="https://www.paisagenslidar.cnptia.embrapa.br/webgis/" target="_blank">PaiSus</a>
+), Marcus Vinicio Neves d'Oliveira (**MarVin**), Estimativa de biomassa na Amazônia (
+<a href="http://www.ccst.inpe.br/projetos/eba-estimativa-de-biomassa-na-amazonia/" target="_blank">EBA</a>
+).
 
-Not all lidar transects have matching field inventories, therefore, I only processed lidar data with associated inventories.
+From Sassan Saatchi we have 1-m resolution CHMs for lidar flights in Chocó, Colombia.
+
+Canopy Height Models (CHM) were processed only from lidar having field inventories in their flight path.
 
 ***TODO:*** *Add map and/or list.*
 
@@ -30,19 +37,26 @@ Not all lidar transects have matching field inventories, therefore, I only proce
 
 # Canopy Height Models
 
-LAStools were used to compute Canopy Height Models (CHM). First, point clouds had ground points classified, then height was normalised and a pit-free surface algorithm was applied to obtain a CHM of 1-m resolution. 
+LAStools were used to compute Canopy Height Models (CHM). First, ground points were classified, then height was normalised and to obtain a CHM of 1-m resolution, a pit-free algorithm (based on 
+<a href="https://doi.org/10.14358/PERS.80.9.863" target="_blank">Khosravipour <i>et al</i>., 2014</a>
+) was applied.
 
-Scripts and pipelines were written in R, using the function `system()` to call LAStools. Since LAStools are Windows binaries, I used Wine software [**TODO:** *add link*] to run them under macOS Mojave (**TODO:** *add Wiki*).
+Scripts and pipelines were written in R, using the function `system()` to call LAStools. Since LAStools are Windows binaries, I used 
+<a href="https://www.winehq.org/" target="_blank">Wine software</a> 
+to run them under macOS Mojave as this is the last 32-bit-compatible operating system 
 
-## Ground & Height (point cloud)
-I followed this blog: [Rasterizing Perfect Canopy Height Models from LiDAR](https://rapidlasso.com/2014/11/04/rasterizing-perfect-canopy-height-models-from-lidar/)
+<br>
 
-Ground points were classified using `lasground` and then height was normalised using `lasheight` dropping values above 80m as we know trees in these areas won't be that tall and we can filter out *e.g.* points sampling birds flying.
+## Ground & Height
+
+I followed this blog: 
+<a href="https://rapidlasso.com/2014/11/04/rasterizing-perfect-canopy-height-models-from-lidar/" target="_blank">Rasterizing Perfect Canopy Height Models from LiDAR</a> 
+
+Ground points were classified using `lasground` and then height was normalised using `lasheight`, dropping z values above 80m as we know trees in these areas won't be that tall. We can then filter out *e.g.* points sampling birds flying.
 
 ```{r }
-
-las.input <- "./raw/ANA_A01_2017_laz/*.la{z,s}"
-hnorm.dir <- "./hnorm/ANA_A01_2017_laz"
+las.input <- "raw/ANA_A01_2017_laz/*.la{z,s}"
+hnorm.dir <- "hnorm/ANA_A01_2017_laz"
 
 callground1 <- paste(
   'wine', '~/LAStools/bin/lasground_new',
@@ -65,32 +79,255 @@ It will eventually call this command into the shell Terminal:
 `r paste('$',callground1)`
 ````
 
-
-```{bash eval=F}
-$ wine ~/LAStools/bin/lasground_new -i ./raw/ANA_A01_2017_laz/*.la{z,s} -wilderness -odix _ground -olaz -odir ./hnorm/ANA_A01_2017_laz
-```
-
+<br>
 
 ## CHM computation
 
-### Average pulse spacing
+To create CHMs, a grid is superposed on top of the point cloud to leave the highest first-return per grid cell. Because some grids (pixels) may remain empty (pits), points are converted to disks of a certain diameter to give higher chances to intersect with a pixel. A Triangulated Irregular Network (TIN) is generated with those and then this TIN is converted to a raster. The pit-free algorithm based on 
+<a href="https://doi.org/10.14358/PERS.80.9.863" target="_blank">Khosravipour <i>et al</i>., 2014</a>)
+creates a sequence of partial CHMs with finer resolution under different height thresholds. Then, these are stacked together leaving the highest pixel values.
 
-parameters-- grid, subcircle, 
+<br>
+
+Some parameters were specified:
 
 
-# Top-of-the-Canopy Height
+| | |
+|:-:|:-|
+|**resol**|Final resolution of the CHM|
+|**substep**|Resolution of grid in the steps previous to the final CHM|
+|**subcircle**|Diameter splatting points into disks|
+|**kill**|Maximum TIN triangle size allowed when creating the pit-free partial CHMs|
+|**h_seq**|Height thresholds for the pit-free sequence|
+|
+
+***TO-DO: clean this script...***
+
+```{r , eval=FALSE}
+las.input <- "raw/ANA_A01_2017_laz/*.la{z,s}"
+hnorm.dir <- "hnorm/ANA_A01_2017_laz"
+
+### compute CHM ----
+resol = 1
+subcircle = 0.2
+substep = 0.2
+kill = 2.0
+h_seq = c(2,5,10,20,30,40,50,60)
+
+### thin las -----
+# use multicore, set to the number of our cores
+numCores <- detectCores()
+cl <- makeCluster(numCores)
+registerDoParallel(cl)
+
+foreach(i = 1:length(base_folders)) %dopar% {
+  ### create folders -----
+  out.folder <- 
+    paste0('~/Rproj/07_carbon_br/data/lidar/',
+           'chm_pitfree_subcir',sub("\\.", "", as.character(subcircle)),
+           '_kill',kill,
+           '_substep',sub("\\.", "", as.character(substep)))
+  dir.create(out.folder ,recursive = T)
+  (temp_laz.dir <- paste0(out.folder,'/temp_laz/PaiSus/',base_folders[i]))
+  dir.create(temp_laz.dir ,recursive = T)
+  ### thin las -----
+  thin_las <- 
+    paste(
+      'wine ~/LAStools/bin/lasthin', 
+      '-i',paste0(hnorm.dir[i],'/*hnorm.la{z,s}'),
+      '-subcircle', subcircle, 
+      '-step', substep, 
+      '-highest -olaz',
+      '-odir', temp_laz.dir
+    )
+  cat('--Calling: \n',thin_las,'\n\n')
+  system(thin_las)
+}
+stopImplicitCluster()
+### chm ground and interpolation -----
+numCores <- detectCores()
+print(cl <- makeCluster(numCores))
+registerDoParallel(cl)
+
+foreach(i = 1:length(hnorm.dir)) %dopar% {
+  # create folders -----
+  out.folder <- 
+    paste0('~/Rproj/07_carbon_br/data/lidar/',
+           'chm_pitfree_subcir',sub("\\.", "", as.character(subcircle)),
+           '_kill',kill,
+           '_substep',sub("\\.", "", as.character(substep)))
+  dir.create(out.folder ,recursive = T)
+  (temp_laz.dir <- paste0(out.folder,'/temp_laz/PaiSus/',base_folders[i]))
+  dir.create(temp_laz.dir ,recursive = T)
+  (tmp_chm.dir <- paste0(out.folder,'/tmp_chm/PaiSus/',base_folders[i]))
+  dir.create(tmp_chm.dir ,recursive = T)
+  (chm_pitfree.dir <- paste0(out.folder,'/chm_pitfree/PaiSus/'))
+  dir.create(chm_pitfree.dir ,recursive = T)
+  # chm ground ----
+  chm_ground <- 
+    paste(
+      'wine ~/LAStools/bin/blast2dem',
+      '-i',paste0(hnorm.dir[i],'/*hnorm.la{z,s}'),
+      '-merged -drop_z_above 0.1',
+      '-step', resol,
+      '-o', paste0(tmp_chm.dir,'/chm_ground.bil')
+    )
+  cat('--Calling: \n',chm_ground,'\n\n')
+  system(chm_ground)
+
+  # interpolation ----
+  chm_interp0 <- 
+    paste(
+      'wine ~/LAStools/bin/blast2dem',
+      '-i', paste0(temp_laz.dir,'/*.la{z,s}'),
+      '-merged -v',
+      '-step', resol,
+      '-kill', kill, 
+      '-o', paste0(tmp_chm.dir,'/chm_00.bil')
+    )
+  cat('--Calling: \n',chm_interp0,'\n\n')
+  system(chm_interp0)
+  
+  chm_interpol <- 
+    paste(
+      paste(
+        'wine ~/LAStools/bin/blast2dem',
+        '-i', paste0(temp_laz.dir,'/*.la{z,s}'),
+        '-merged -v',
+        '-step', resol,
+        '-kill', kill),
+      paste('-drop_z_below',
+            h_seq, '-o', paste0(tmp_chm.dir,'/chm_',sprintf('%02d',h_seq),'.bil'))
+    )
+  cat('--Calling: \n',paste(chm_interpol,collapse = '\n'),'\n\n')
+  system(paste(chm_interpol,collapse = '\n'))
+  
+  
+  # merge chms png and asc ----
+  merge_chms <- 
+    paste(
+      'wine ~/LAStools/bin/lasgrid',
+      '-i', paste0(tmp_chm.dir,'/*.bil'),
+      '-merged -highest -false -v', 
+      '-step', resol,
+      '-o', paste0(chm_pitfree.dir,'/',basename(tmp_chm.dir),'__',
+                   sub("\\.", "", as.character(subcircle)),kill,
+                   sub("\\.", "", as.character(substep)),'.png')
+    )
+  cat('--Calling: \n',merge_chms,'\n\n')
+  system(merge_chms)
+  
+  merge_chms_asc <- 
+    paste(
+      'wine ~/LAStools/bin/lasgrid',
+      '-i', paste0(tmp_chm.dir,'/*.bil'),
+      '-merged -highest -v', 
+      '-step', resol,
+      '-o', paste0(chm_pitfree.dir,'/',basename(tmp_chm.dir),'__',
+                   sub("\\.", "", as.character(subcircle)),kill,
+                   sub("\\.", "", as.character(substep)),'.asc')
+    )
+  cat('--Calling: \n',merge_chms_asc,'\n\n')
+  system(merge_chms_asc)
+}
+stopImplicitCluster()
+
+```
+
+<br>
+
+# Top-of-Canopy Height (TCH)
+
+After creating CHMs for the lidar scenes, Top-of-Canopy Height (TCH) was extracted for each forest inventory polygon. Basically, selecting the pixels within the polygon and then calculating the mean value of those.
+
+<br>
 
 ## TCH plots
 
+Histogram?
 
-# Cover 10
+<br>
+
+# Cover~10~
+
+A cover fraction was acquired by calculating the proportion of pixel values ≥ 10 m within a plot.
+
+<br>
+
+# CHM by plot{.tabset}
+
+***TODO:*** *change to drop-down menu & add pdf link*
+
+You can see the CHM image(s) in each plot. There are some plots that have several lidar resurveys.
 
 
+```{r , echo=FALSE, message=FALSE, warning=FALSE, results='hide', cache=TRUE} 
+library(raster)
+library(sf)
+fr <- list.files('~/Rproj/07_carbon_br/data/lidar/chm_pitfree_subcir02_kill2_substep02/chm_pitfree/', recursive = T, pattern = 'asc', full.names = T)
+nr <- sub('.asc', '', basename(fr))
+# rl <- lapply(fr, function(x) raster(x))
+rr <- readRDS("~/Rproj/07_carbon_br/data/lidar/chm_pitfree_subcir02_kill2_substep02/tmpRmd/rxmk_v1.Rds")
+# nr <-  sapply(rl, names)
+
+dbptch <- st_read('~/Rproj/07_carbon_br/data/inventories/plots_clean/shapes/db_parcela_all_tch/dbptch_v1/dbptch_v1.shp')
+names(dbptch) <- read.csv('~/Rproj/07_carbon_br/data/inventories/plots_clean/shapes/db_parcela_all_tch/dbptch_v1/dbptch_v1_varnames.csv')[,1]
+
+tmp <- gregexpr('_',dbptch$chmintersect)
+nchm <- substr(dbptch$chmintersect,1,sapply(tmp,'[',3)-1)
+```
 
 
+```{r, 'chms_plots', results='asis', echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE} 
+cat('\nSelect the project \n\n')
+for(k in unique(dbptch$owner)){
+  cat('##',k,'{.tabset}\n')
+  cat('\nSelect the location \n\n')
+  lcid <- unique(dbptch$location[dbptch$owner==k])
+  
+  for(j in lcid) {
+    cat('###',j,'{.tabset .unnumbered}\n')
+    cat('\nSelect the plot \n\n')
+    plid <- dbptch$plotID[dbptch$location==j]
+    
+    for(i in unique(plid)) {
+      cat('####',i,'{.tabset .unnumbered}\n')
+      cat('\nSelect the CHM \n\n')
+      chmid <- which(paste(dbptch$owner,dbptch$location,dbptch$plotID)%in%paste(k,j,i))
+      
+      for(h in chmid) {
+        cat('#####',nchm[h],'{.unnumbered}\n')
+      
+        px <- dbptch[h,]
+        rx <- rr[[h]]
+        # rx <- rl[[grep(dbptch$chmintersect[h], nr)]]
+        # rxc <- mask(rl[[grep(dbptch$chmintersect[h], nr)]], dbptch[h,])
+        # rxc <- trim(mask(rx,px))
+        # print(rx)
 
+        plot(st_geometry(px), col=NA, border=NA, main=names(rx))
+        plot(rx, zlim=c(0,78.4), col=lidR::height.colors(100), add=T)
+        plot(st_geometry(px), add=T)
+        text(st_coordinates(st_centroid(px)),adj=.5,paste0('Lidar:',
+                                                          '\nTCH= ',round(px$TCHmean,1),
+                                                          '\nCover10= ',round(px$cover10,2),
+                                                          '\nN.pixel= ',px$npx,
+                                                          '\narea.shp= ',round(st_area(px)/10000,3),' ha',
+                                                          '\n\nField:\n',px$location,' ',px$year," (",px$plotID,")",
+                                                          '\nBA= ',round(px$BAplot,1),
+                                                          '\nWD= ',round(px$WDplot2,1),
+                                                          '\nACD= ',round(px$ACD,1)
+                                                          ))
 
+      cat(' \n \n')
+    }
+      cat(' \n \n')
+    }
+    cat(' \n \n')
+  }
+  cat(' \n \n')
+}
 
-
+```
 
 

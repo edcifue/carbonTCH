@@ -5,8 +5,10 @@
 01_agb_cache/**
 01_agb_files/**
 02_tch_cache/**
+02_tch_files/**
 03_ba_cache/**
 03_ba_files/**
 05_models_cache/**
+05_models_files/**
 index_cache/**
 images/**

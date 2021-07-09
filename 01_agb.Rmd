@@ -504,7 +504,7 @@ abline(a=0, b=1, col='red')
 ```
 
 
-## BA distribution{.tabset}
+## ρ distribution{.tabset}
 
 ```{r results='asis',echo=F}
 cat('###','All inventories{.unnumbered}',' \n')
@@ -515,7 +515,7 @@ dAC <- hist(dbp$WDplot2[INV$owner=='MarVin'], breaks = bks, plot = F)
 
 x <- barplot(rbind(dPS$counts,dAC$counts), col=c('gold2','cyan3'), ylim = range(dAll$counts)*1.1,
         las=2, cex.names=.8, border=NA,
-        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'All')
+        xlab=expression(ρ[2]~(g/cm^3)), ylab='Frequency', main= 'All')
 psxi <- x[1]-mean(diff(x))/2
 psxs <- (1:(length(bks)-1)*mean(diff(x)))
 psxc <- data.frame(bks,pos=c(psxi,psxi+psxs)) 
@@ -528,14 +528,14 @@ cat(' \n \n')
 cat('###','PaiSus{.unnumbered}',' \n')
 barplot(dPS$counts, col='gold2', ylim = range(dAll$counts)*1.1,
         las=2, cex.names=.8, border=NA,
-        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'PaiSus')
+        xlab=expression(ρ[2]~(g/cm^3)), ylab='Frequency', main= 'PaiSus')
 axis(1,  psxp, pretty(bks), line=.2)
 cat(' \n \n')
 
 cat('###','MarVin{.unnumbered}',' \n')
 barplot(dAC$counts, col='cyan3', ylim = range(dAll$counts)*1.1,
         las=2, cex.names=.8, border=NA,
-        xlab='Aboveground Carbon Density (Mg C/ha)', ylab='Frequency', main= 'MarVin')
+        xlab=expression(ρ[2]~(g/cm^3)), ylab='Frequency', main= 'MarVin')
 axis(1,  psxp, pretty(bks), line=.2)
 cat(' \n \n ')
 
@@ -544,34 +544,53 @@ cat(' \n \n ')
 
 # ACD-BA-WD relationships
 
+<!-- Have a look at: https://plotly.com/r/text-and-annotations/ -->
+
 ## ACD-BA
 
 ```{r echo=F}
-to.xy <- cbind(dbp$BAplot, dbp$ACD)
-xl <- expression('Basal Area ' (m^2/ha))
-yl <- expression("ACD " (Mg~C/ha))
-
-plot(to.xy, pch=20, col=densCols(to.xy), xlab = xl, ylab = yl)
-
+library(plotly)
+fig <- plot_ly(dbp, x = ~BAplot, y = ~ACD, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>Location: ', location,
+                      '</br>plotID: ', plotID,
+                      '</br>year: ', year)) %>%
+  layout(xaxis = list(title = "Basal Area (m<sup>2</sup> ha<sup>-1</sup>)"), 
+         yaxis = list(title = "ACD (Mg<sub>C</sub> ha<sup>-1</sup>)"))
+fig
 ```
 
 
 ## ACD-WD
 
 ```{r echo=F}
-to.xy <- cbind(dbp$WDplot2, dbp$ACD)
-xl <- expression(ρ[2]~(g/cm^3))
-yl <- expression("ACD " (Mg~C/ha))
-
-plot(to.xy, pch=20, col=densCols(to.xy), xlab = xl, ylab = yl)
-
+library(plotly)
+fig <- plot_ly(dbp, x = ~WDplot2, y = ~ACD, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>Location: ', location,
+                      '</br>plotID: ', plotID,
+                      '</br>year: ', year)) %>%
+  layout(xaxis = list(title = "ρ<sub>2</sub> (g cm<sup>-3</sup>)"), 
+         yaxis = list(title = "ACD (Mg<sub>C</sub> ha<sup>-1</sup>)"))
+fig
 ```
 
-## BA-WD
+## BA-WD 
 
 ```{r echo=F}
-to.xy <- cbind(dbp$BAplot, dbp$WDplot2)
-xl <- expression('Basal Area ' (m^2/ha))
-yl <- expression(ρ[2]~(g/cm^3))
+library(plotly)
+fig <- plot_ly(dbp, x = ~BAplot, y = ~WDplot2, type = 'scatter', mode = 'markers',
+        # hoverinfo = 'text',
+        text = ~paste('Project: ', owner,
+                      '</br>Location: ', location,
+                      '</br>plotID: ', plotID,
+                      '</br>year: ', year)) %>%
+  layout(xaxis = list(title = "Basal Area (m<sup>2</sup> ha<sup>-1</sup>)"),
+         yaxis = list(title = "ρ<sub>2</sub> (g cm<sup>-3</sup>)"))
+fig
+```
 
-plot(to.xy, pch=20, col=densCols(to.xy), xlab = xl, ylab = yl)
+
+
